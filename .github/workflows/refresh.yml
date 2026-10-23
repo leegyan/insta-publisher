@@ -1,0 +1,15 @@
+name: 토큰 갱신
+on:
+  schedule:
+    - cron: '17 21 * * 0'   # 매주 월요일 06:17(한국 시각)
+  workflow_dispatch: {}
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pynacl==1.5.0
+      - env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: python3 publish.py refresh
