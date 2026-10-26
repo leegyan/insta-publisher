@@ -1,6 +1,6 @@
 # 인스타그램 자동 게시기 (Instagram API with Instagram Login, 공식 API)
 # 사용:
-#   python3 publish.py run      → queue 가지의 게시 시각이 지난 발간물을 캐러셀(또는 post.json type=reel 이면 릴스)로 게시하고, 게시한 발간물을 queue에서 뺀다
+#   python3 publish.py run      → queue 가지의 게시 시각이 지난 발간물을 캐러셀(post.json type=reel 이면 릴스, type=story 이면 스토리)로 게시하고, 게시한 발간물을 queue에서 뺀다
 #   python3 publish.py refresh  → 계정마다 토큰을 갱신(60일 유효)하고 GitHub 비밀값을 새 토큰으로 바꾼다
 # 이미지 이력 회피: queue 가지는 매번 부모 없는 커밋 1개로 덮어쓴다(force push). 지난 이미지는 가지 이력에 남지 않는다
 # 토큰: GitHub Actions 비밀값(accounts.json의 token_secret 이름). 이 파일과 저장소에는 토큰을 적지 않는다
@@ -63,6 +63,12 @@ def publish_post(pdir, sha, gap=30):
     if not acc.get('ig_user_id'): raise RuntimeError(f'accounts.json {meta["account"]} ig_user_id 비어 있음')
     ig = acc['ig_user_id']
     rel = pdir.relative_to(QUEUE).as_posix()
+    if meta.get('type') == 'story':   # 스토리: 영상 1개 → STORIES 컨테이너 → 게시. 캡션 · 스티커는 API로 넣을 수 없음(화면 위 계정 이름을 누르면 프로필로 감)
+        url = f'https://raw.githubusercontent.com/{REPO}/{sha}/{urllib.parse.quote(rel)}/{urllib.parse.quote(meta["video"])}'
+        cid = http('POST', f'{API}/{ig}/media', {'media_type': 'STORIES', 'video_url': url}, token)['id']
+        wait_finished(cid, token, tries=20, gap=gap)
+        mid = http('POST', f'{API}/{ig}/media_publish', {'creation_id': cid}, token)['id']
+        return meta, mid
     if meta.get('type') == 'reel':   # 릴스: 영상 1개 → REELS 컨테이너 → 게시(피드에도 보이게 share_to_feed). 영상 처리는 사진보다 오래 걸려 30초 × 20번(10분)까지 기다림
         url = f'https://raw.githubusercontent.com/{REPO}/{sha}/{urllib.parse.quote(rel)}/{urllib.parse.quote(meta["video"])}'
         cid = http('POST', f'{API}/{ig}/media', {'media_type': 'REELS', 'video_url': url, 'caption': meta['caption'], 'share_to_feed': True}, token)['id']
