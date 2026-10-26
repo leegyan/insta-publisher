@@ -69,9 +69,12 @@ def publish_post(pdir, sha, gap=30):
         wait_finished(cid, token, tries=20, gap=gap)
         mid = http('POST', f'{API}/{ig}/media_publish', {'creation_id': cid}, token)['id']
         return meta, mid
-    if meta.get('type') == 'reel':   # 릴스: 영상 1개 → REELS 컨테이너 → 게시(피드에도 보이게 share_to_feed). 영상 처리는 사진보다 오래 걸려 30초 × 20번(10분)까지 기다림
+    if meta.get('type') == 'reel':   # 릴스: 영상 1개(+ 커버 JPEG) → REELS 컨테이너 → 게시(피드에도 보이게 share_to_feed). 영상 처리는 사진보다 오래 걸려 30초 × 20번(10분)까지 기다림
         url = f'https://raw.githubusercontent.com/{REPO}/{sha}/{urllib.parse.quote(rel)}/{urllib.parse.quote(meta["video"])}'
-        cid = http('POST', f'{API}/{ig}/media', {'media_type': 'REELS', 'video_url': url, 'caption': meta['caption'], 'share_to_feed': True}, token)['id']
+        body = {'media_type': 'REELS', 'video_url': url, 'caption': meta['caption'], 'share_to_feed': True}
+        if meta.get('cover'):  # 커버(썸네일) JPEG. Meta 문서: cover_url 은 thumb_offset 보다 우선, 게시 뒤에는 바꿀 수 없음
+            body['cover_url'] = f'https://raw.githubusercontent.com/{REPO}/{sha}/{urllib.parse.quote(rel)}/{urllib.parse.quote(meta["cover"])}'
+        cid = http('POST', f'{API}/{ig}/media', body, token)['id']
         wait_finished(cid, token, tries=20, gap=gap)
         mid = http('POST', f'{API}/{ig}/media_publish', {'creation_id': cid}, token)['id']
         return meta, mid
