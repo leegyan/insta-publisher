@@ -1,0 +1,46 @@
+name: 토큰 점검
+# 게시하지 않는다. 계정마다 GET /me 로 user_id · username 만 읽어 기록/토큰점검.txt 에 적는다. 토큰 값은 출력하지 않는다
+on:
+  push:
+    paths: ['.github/workflows/check.yml', 'accounts.json']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 점검
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+        run: |
+          mkdir -p 기록
+          python3 - <<'EOF'
+          import json, os, urllib.request, urllib.error, datetime
+          cfg = json.load(open('accounts.json', encoding='utf-8'))
+          sec = json.loads(os.environ['SECRETS_JSON'])
+          api = 'https://graph.instagram.com/' + cfg.get('api_version', 'v26.0')
+          now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec='seconds')
+          lines = [f'점검 시각 {now}']
+          for name, acc in cfg['accounts'].items():
+              tok = sec.get(acc['token_secret'])
+              if not tok:
+                  lines.append(f'{name}: 비밀값 {acc["token_secret"]} 없음'); continue
+              req = urllib.request.Request(api + '/me?fields=user_id,username')
+              req.add_header('Authorization', 'Bearer ' + tok)
+              try:
+                  r = json.loads(urllib.request.urlopen(req, timeout=30).read())
+                  same = '일치' if str(r.get('user_id')) == acc.get('ig_user_id') else f'불일치(accounts.json {acc.get("ig_user_id")})'
+                  lines.append(f'{name}: 정상 username={r.get("username")} user_id={r.get("user_id")} ig_user_id {same}')
+              except urllib.error.HTTPError as e:
+                  lines.append(f'{name}: 실패 HTTP {e.code} {e.read().decode(errors="replace")[:300]}')
+          lines.append(f'GH_ADMIN_TOKEN(토큰 자동 갱신용): {"있음" if sec.get("GH_ADMIN_TOKEN") else "없음"}')
+          open('기록/토큰점검.txt', 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          EOF
+      - name: 결과 저장
+        run: |
+          git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
+          git add 기록/토큰점검.txt
+          git diff --cached --quiet || (git commit -m "토큰 점검 결과" && git push)
