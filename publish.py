@@ -82,15 +82,32 @@ def publish_youtube(pdir, meta, yt):
     body = {'snippet': {'title': cap.splitlines()[0][:100], 'description': cap[:4900], 'categoryId': '27', 'defaultLanguage': 'ko'},
             'status': {'privacyStatus': 'public', 'selfDeclaredMadeForKids': False}}
     data = (pdir / meta['video']).read_bytes()
-    if HTTP: return HTTP('YT_UPLOAD', 'youtube', body, tok)['id']
+    if HTTP:
+        vid = HTTP('YT_UPLOAD', 'youtube', body, tok)['id']
+        if meta.get('cover'): HTTP('YT_THUMB', vid, meta['cover'], tok)
+        return vid
     req = urllib.request.Request('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status', data=json.dumps(body).encode(), method='POST')
     for k, v in {'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'video/mp4', 'X-Upload-Content-Length': str(len(data))}.items(): req.add_header(k, v)
     try:
         with urllib.request.urlopen(req, timeout=60) as r: loc = r.headers['Location']
         up = urllib.request.Request(loc, data=data, method='PUT'); up.add_header('Content-Type', 'video/mp4')
-        with urllib.request.urlopen(up, timeout=600) as r: return json.loads(r.read())['id']
+        with urllib.request.urlopen(up, timeout=600) as r: vid = json.loads(r.read())['id']
     except urllib.error.HTTPError as e:
         raise RuntimeError(f'유튜브 업로드 → HTTP {e.code}: {e.read().decode(errors="replace")[:500]}')
+    if meta.get('cover'): yt_thumbnail(vid, pdir / meta['cover'], tok)
+    return vid
+
+
+def yt_thumbnail(vid, path, tok):
+    # 썸네일 = 릴스 커버(커버.jpg). 채널 전화 인증 전이면 거절됨 → 영상은 이미 올라갔으므로 게시는 성공으로 두고 경고만 남김
+    req = urllib.request.Request(f'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={vid}', data=path.read_bytes(), method='POST')
+    req.add_header('Authorization', 'Bearer ' + tok); req.add_header('Content-Type', 'image/jpeg')
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r: r.read()
+        print('썸네일 설정', vid)
+    except urllib.error.HTTPError as e:
+        msg = f'썸네일 실패 {vid} HTTP {e.code}: {e.read().decode(errors="replace")[:300]}'
+        print(msg); log({'post_id': 'thumbnail_' + vid, 'warning': msg, 'at': datetime.datetime.now(KST).isoformat(timespec='seconds')})
 
 
 def publish_post(pdir, sha, gap=30):

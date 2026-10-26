@@ -18,7 +18,7 @@ def main(pub, account, at, repo_dir, reel=None, kinds=('reel',), suffix=''):
     if reel:
         reel = pathlib.Path(reel); vids = sorted(reel.glob('*.mp4'))
         if len(vids) != 1: sys.exit(f'릴스판 폴더 mp4 {len(vids)}개(1개여야 함)')
-        if 'reel' in kinds:
+        if 'reel' in kinds or 'youtube' in kinds:
             cv = reel / '커버.jpg'
             if not cv.exists(): sys.exit('릴스판 폴더에 커버.jpg 없음(python3 공용/tools/reel_cover.py <릴스판폴더>)')
             if cv.stat().st_size > 8 * 1024 * 1024: sys.exit('커버.jpg 8MB 초과(Meta 한도)')
@@ -58,7 +58,7 @@ def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
     if kind in ('reel', 'story', 'youtube'):
         shutil.copy(vids[0], d / 'reel.mp4'); names = ['reel.mp4']
         meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': cap if kind != 'story' else '', 'type': kind, 'video': 'reel.mp4'}
-        if kind == 'reel': shutil.copy(reel / '커버.jpg', d / 'cover.jpg'); meta['cover'] = 'cover.jpg'
+        if kind in ('reel', 'youtube'): shutil.copy(reel / '커버.jpg', d / 'cover.jpg'); meta['cover'] = 'cover.jpg'  # 릴스 cover_url · 쇼츠 썸네일
     else:
         names = []
         for i, p in enumerate(pngs, 1):
