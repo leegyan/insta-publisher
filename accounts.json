@@ -7,7 +7,8 @@
       "token_secret": "IG_TOKEN_DON_IN_NUMBERS",
       "youtube": {
         "client_id": "20682840961-2v2gm46gl3umtnvi3olfq6etvh9tdnep.apps.googleusercontent.com",
-        "secret_prefix": "YT_DON_IN_NUMBERS"
+        "secret_prefix": "YT_DON_IN_NUMBERS",
+        "outro": "구독하고 돈 되는 정보를 매일매일 무료로 받아가세요🙌"
       }
     }
   }
