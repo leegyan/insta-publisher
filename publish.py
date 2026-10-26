@@ -190,6 +190,11 @@ def yt_auth(account, url):
     print(account, '유튜브 연결 완료 → 비밀값', pre + '_REFRESH')
 
 
+def yt_auth_event():
+    ev = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))['inputs']
+    yt_auth(ev['account'], ev['url'])
+
+
 def refresh():
     put = gh_secret_setter()
     errors = []
@@ -205,4 +210,4 @@ def refresh():
 
 
 if __name__ == '__main__':
-    {'run': run, 'refresh': refresh, 'yt_url': yt_url, 'yt_auth': yt_auth}[sys.argv[1]](*sys.argv[2:])
+    {'run': run, 'refresh': refresh, 'yt_url': yt_url, 'yt_auth': yt_auth, 'yt_auth_event': yt_auth_event}[sys.argv[1]](*sys.argv[2:])
