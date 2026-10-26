@@ -2,6 +2,6 @@
   "repo": "leegyan/insta-publisher",
   "api_version": "v26.0",
   "accounts": {
-    "don.in.numbers": {"ig_user_id": "", "token_secret": "IG_TOKEN_DON_IN_NUMBERS"}
+    "don.in.numbers": {"ig_user_id": "17841425349888997", "token_secret": "IG_TOKEN_DON_IN_NUMBERS"}
   }
 }
