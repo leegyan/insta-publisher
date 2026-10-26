@@ -38,9 +38,9 @@ def git(*a, cwd=None, check=True):
 def wait_finished(cid, token, tries=10, gap=30):
     # Meta 문서: status_code를 1분에 한 번, 5분 넘지 않게 확인 권장 → 30초 간격 10번(5분)
     for _ in range(tries):
-        st = http('GET', f'{API}/{cid}?fields=status_code', token=token).get('status_code')
+        r = http('GET', f'{API}/{cid}?fields=status_code,status', token=token); st = r.get('status_code')
         if st == 'FINISHED': return
-        if st in ('ERROR', 'EXPIRED'): raise RuntimeError(f'컨테이너 {cid} 상태 {st}')
+        if st in ('ERROR', 'EXPIRED'): raise RuntimeError(f'컨테이너 {cid} 상태 {st}: {r.get("status", "")}')  # status 에 오류 번호 · 설명이 옴
         time.sleep(gap)
     raise RuntimeError(f'컨테이너 {cid} 5분 안에 FINISHED가 되지 않음')
 
