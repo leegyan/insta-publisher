@@ -11,7 +11,9 @@ KST = datetime.timezone(datetime.timedelta(hours=9))
 CFG = json.loads((ROOT / 'accounts.json').read_text(encoding='utf-8'))
 API = 'https://graph.instagram.com/' + CFG.get('api_version', 'v26.0')
 REPO = os.environ.get('GITHUB_REPOSITORY', CFG.get('repo', ''))
-SECRETS = json.loads(os.environ.get('SECRETS_JSON', '{}'))
+# 토큰은 워크플로우가 이름별 환경변수(IG_TOKEN_...)로 넘긴다. SECRETS_JSON 은 시험용으로만 남김
+# (toJSON(secrets) 로 비밀값 전체를 넘기면 GitHub 가 워크플로우를 악성 의심으로 막음, 2026-10-26 실측)
+SECRETS = {**json.loads(os.environ.get('SECRETS_JSON', '{}')), **{k: v for k, v in os.environ.items() if k.startswith('IG_TOKEN_') and v}}
 QUEUE = os.environ.get('QUEUE_DIR', str(ROOT / '_queue'))
 LOG = ROOT / '기록' / '게시기록.jsonl'
 HTTP = None  # 시험에서 가짜 함수로 바꿈
