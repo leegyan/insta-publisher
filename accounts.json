@@ -2,6 +2,13 @@
   "repo": "leegyan/insta-publisher",
   "api_version": "v26.0",
   "accounts": {
-    "don.in.numbers": {"ig_user_id": "17841425349888997", "token_secret": "IG_TOKEN_DON_IN_NUMBERS"}
+    "don.in.numbers": {
+      "ig_user_id": "17841425349888997",
+      "token_secret": "IG_TOKEN_DON_IN_NUMBERS",
+      "youtube": {
+        "client_id": "20682840961-2v2gm46gl3umtnvi3olfq6etvh9tdnep.apps.googleusercontent.com",
+        "secret_prefix": "YT_DON_IN_NUMBERS"
+      }
+    }
   }
 }

@@ -1,0 +1,20 @@
+name: 유튜브 연결
+# 계정마다 한 번: Gyan 이 연결 주소에서 허용 → 넘어간 127.0.0.1 주소 전체를 url 에 넣고 실행 → 갱신 토큰이 비밀값 <secret_prefix>_REFRESH 에 들어감
+on:
+  workflow_dispatch:
+    inputs:
+      account: {description: '계정(accounts.json 이름)', required: true, default: 'don.in.numbers'}
+      url: {description: '허용 뒤 넘어간 주소(http://127.0.0.1/?...code=...) 전체', required: true}
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pynacl==1.5.0
+      - env:
+          # 계정을 늘리면 이 줄을 계정마다 하나씩 더한다
+          YT_DON_IN_NUMBERS_CLIENT_SECRET: ${{ secrets.YT_DON_IN_NUMBERS_CLIENT_SECRET }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+          ACC: ${{ inputs.account }}
+          URL_IN: ${{ inputs.url }}
+        run: python3 publish.py yt_auth "$ACC" "$URL_IN"

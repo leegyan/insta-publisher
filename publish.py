@@ -2,6 +2,9 @@
 # 사용:
 #   python3 publish.py run      → queue 가지의 게시 시각이 지난 발간물을 캐러셀(post.json type=reel 이면 릴스, type=story 이면 스토리)로 게시하고, 게시한 발간물을 queue에서 뺀다
 #   python3 publish.py refresh  → 계정마다 토큰을 갱신(60일 유효)하고 GitHub 비밀값을 새 토큰으로 바꾼다
+#   python3 publish.py yt_url <계정>          → 유튜브 연결 주소를 찍는다(Gyan 이 열어 허용 → 127.0.0.1 주소로 넘어감)
+#   python3 publish.py yt_auth <계정> <주소>  → 넘어간 주소의 code 로 유튜브 갱신 토큰을 받아 GitHub 비밀값 <secret_prefix>_REFRESH 에 넣는다(워크플로우 '유튜브 연결')
+#   post.json type=youtube → 유튜브 쇼츠(YouTube Data API videos.insert, 이어 올리기 방식)
 # 이미지 이력 회피: queue 가지는 매번 부모 없는 커밋 1개로 덮어쓴다(force push). 지난 이미지는 가지 이력에 남지 않는다
 # 토큰: GitHub Actions 비밀값(accounts.json의 token_secret 이름). 이 파일과 저장소에는 토큰을 적지 않는다
 import json, os, sys, time, subprocess, urllib.request, urllib.parse, urllib.error, datetime, base64, pathlib
@@ -13,7 +16,9 @@ API = 'https://graph.instagram.com/' + CFG.get('api_version', 'v26.0')
 REPO = os.environ.get('GITHUB_REPOSITORY', CFG.get('repo', ''))
 # 토큰은 워크플로우가 이름별 환경변수(IG_TOKEN_...)로 넘긴다. SECRETS_JSON 은 시험용으로만 남김
 # (toJSON(secrets) 로 비밀값 전체를 넘기면 GitHub 가 워크플로우를 악성 의심으로 막음, 2026-10-26 실측)
-SECRETS = {**json.loads(os.environ.get('SECRETS_JSON', '{}')), **{k: v for k, v in os.environ.items() if k.startswith('IG_TOKEN_') and v}}
+SECRETS = {**json.loads(os.environ.get('SECRETS_JSON', '{}')), **{k: v for k, v in os.environ.items() if k.startswith(('IG_TOKEN_', 'YT_')) and v}}
+YT_REDIRECT = 'http://127.0.0.1'  # Google 데스크톱 앱 키: 허용 뒤 이 주소로 넘어가며 주소창에 code 가 붙는다
+YT_SCOPE = 'https://www.googleapis.com/auth/youtube.upload'
 QUEUE = os.environ.get('QUEUE_DIR', str(ROOT / '_queue'))
 LOG = ROOT / '기록' / '게시기록.jsonl'
 HTTP = None  # 시험에서 가짜 함수로 바꿈
@@ -55,9 +60,45 @@ def log(rec):
     with open(LOG, 'a', encoding='utf-8') as f: f.write(json.dumps(rec, ensure_ascii=False) + '\n')
 
 
+def form_post(url, fields):
+    if HTTP: return HTTP('FORM', url, fields, None)
+    req = urllib.request.Request(url, data=urllib.parse.urlencode(fields).encode(), method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r: return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f'POST {url} → HTTP {e.code}: {e.read().decode(errors="replace")[:300]}')
+
+
+def yt_access(yt):
+    pre = yt['secret_prefix']; sec, ref = SECRETS.get(pre + '_CLIENT_SECRET'), SECRETS.get(pre + '_REFRESH')
+    if not sec or not ref: raise RuntimeError(f'비밀값 {pre}_CLIENT_SECRET · {pre}_REFRESH 없음')
+    return form_post('https://oauth2.googleapis.com/token', {'client_id': yt['client_id'], 'client_secret': sec, 'refresh_token': ref, 'grant_type': 'refresh_token'})['access_token']
+
+
+def publish_youtube(pdir, meta, yt):
+    # 쇼츠: 세로 영상 3분 이하는 유튜브가 쇼츠로 분류한다. 제목 = 캡션 1줄(100자), 설명 = 캡션 전체(< > 는 유튜브가 받지 않아 뺌)
+    tok = yt_access(yt)
+    cap = meta['caption'].replace('<', '').replace('>', '')
+    body = {'snippet': {'title': cap.splitlines()[0][:100], 'description': cap[:4900], 'categoryId': '27', 'defaultLanguage': 'ko'},
+            'status': {'privacyStatus': 'public', 'selfDeclaredMadeForKids': False}}
+    data = (pdir / meta['video']).read_bytes()
+    if HTTP: return HTTP('YT_UPLOAD', 'youtube', body, tok)['id']
+    req = urllib.request.Request('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status', data=json.dumps(body).encode(), method='POST')
+    for k, v in {'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'video/mp4', 'X-Upload-Content-Length': str(len(data))}.items(): req.add_header(k, v)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r: loc = r.headers['Location']
+        up = urllib.request.Request(loc, data=data, method='PUT'); up.add_header('Content-Type', 'video/mp4')
+        with urllib.request.urlopen(up, timeout=600) as r: return json.loads(r.read())['id']
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f'유튜브 업로드 → HTTP {e.code}: {e.read().decode(errors="replace")[:500]}')
+
+
 def publish_post(pdir, sha, gap=30):
     meta = json.loads((pdir / 'post.json').read_text(encoding='utf-8'))
     acc = CFG['accounts'][meta['account']]
+    if meta.get('type') == 'youtube':
+        if not acc.get('youtube'): raise RuntimeError(f'accounts.json {meta["account"]} youtube 설정 없음')
+        return meta, publish_youtube(pdir, meta, acc['youtube'])
     token = SECRETS.get(acc['token_secret'])
     if not token: raise RuntimeError(f'비밀값 {acc["token_secret"]} 없음')
     if not acc.get('ig_user_id'): raise RuntimeError(f'accounts.json {meta["account"]} ig_user_id 비어 있음')
@@ -117,7 +158,7 @@ def run(now=None, gap=30):
     if errors: print('실패:\n' + '\n'.join(errors)); sys.exit(1)
 
 
-def refresh():
+def gh_secret_setter():
     from nacl import encoding, public  # PyNaCl: GitHub 비밀값 암호화
     gh = os.environ['GH_ADMIN_TOKEN']
     def ghapi(method, path, data=None):
@@ -126,18 +167,42 @@ def refresh():
         with urllib.request.urlopen(req) as r: b = r.read(); return json.loads(b) if b else {}
     key = ghapi('GET', f'/repos/{REPO}/actions/secrets/public-key')
     box = public.SealedBox(public.PublicKey(key['key'].encode(), encoding.Base64Encoder()))
+    def put(name, value):
+        enc = base64.b64encode(box.encrypt(value.encode())).decode()
+        ghapi('PUT', f'/repos/{REPO}/actions/secrets/{name}', {'encrypted_value': enc, 'key_id': key['key_id']})
+    return put
+
+
+def yt_url(account):
+    yt = CFG['accounts'][account]['youtube']
+    print('https://accounts.google.com/o/oauth2/v2/auth?' + urllib.parse.urlencode({'client_id': yt['client_id'], 'redirect_uri': YT_REDIRECT, 'response_type': 'code', 'scope': YT_SCOPE, 'access_type': 'offline', 'prompt': 'consent'}))
+
+
+def yt_auth(account, url):
+    yt = CFG['accounts'][account]['youtube']; pre = yt['secret_prefix']
+    code = urllib.parse.parse_qs(urllib.parse.urlparse(url.strip()).query).get('code', [''])[0]
+    if not code: sys.exit('주소에 code 가 없음 — 허용 뒤 넘어간 127.0.0.1 주소 전체를 넣는다')
+    print('::add-mask::' + code)
+    r = form_post('https://oauth2.googleapis.com/token', {'code': code, 'client_id': yt['client_id'], 'client_secret': SECRETS[pre + '_CLIENT_SECRET'], 'redirect_uri': YT_REDIRECT, 'grant_type': 'authorization_code'})
+    if 'refresh_token' not in r: sys.exit('갱신 토큰을 받지 못함(이미 쓴 code 이거나 prompt=consent 가 빠짐)')
+    print('::add-mask::' + r['refresh_token'])
+    gh_secret_setter()(pre + '_REFRESH', r['refresh_token'])
+    print(account, '유튜브 연결 완료 → 비밀값', pre + '_REFRESH')
+
+
+def refresh():
+    put = gh_secret_setter()
     errors = []
     for name, acc in CFG['accounts'].items():
         tok = SECRETS.get(acc['token_secret'])
         if not tok: errors.append(f'{name}: 비밀값 없음'); continue
         try:
             r = http('GET', 'https://graph.instagram.com/refresh_access_token?' + urllib.parse.urlencode({'grant_type': 'ig_refresh_token', 'access_token': tok}))
-            enc = base64.b64encode(box.encrypt(r['access_token'].encode())).decode()
-            ghapi('PUT', f'/repos/{REPO}/actions/secrets/{acc["token_secret"]}', {'encrypted_value': enc, 'key_id': key['key_id']})
+            put(acc['token_secret'], r['access_token'])
             print(name, '토큰 갱신, 남은 일수', r['expires_in'] // 86400)
         except Exception as e: errors.append(f'{name}: {str(e)[:300]}')
     if errors: print('실패:\n' + '\n'.join(errors)); sys.exit(1)
 
 
 if __name__ == '__main__':
-    {'run': run, 'refresh': refresh}[sys.argv[1]]()
+    {'run': run, 'refresh': refresh, 'yt_url': yt_url, 'yt_auth': yt_auth}[sys.argv[1]](*sys.argv[2:])

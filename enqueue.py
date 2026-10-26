@@ -3,7 +3,8 @@
 #   발간물폴더: 04_slides_v2/ 의 PNG 8장(이름순) + 06_캡션.txt
 #   --reel: 캐러셀 대신 릴스 + 같은 영상의 스토리(게시 1건 = 캐러셀 + 릴스 + 스토리). 릴스판폴더의 mp4 1개 + 커버.jpg(공용/tools/reel_cover.py, 없으면 넣지 않음) + 캡션.txt(없으면 발간물 06_캡션.txt). 게시물ID 끝에 _릴스 · _스토리
 #   --story: 스토리만(릴스판폴더의 mp4). 게시물ID 끝에 _스토리
-#   --reel-only: --reel 에서 스토리 없이 릴스만(지운 릴스를 다시 올릴 때)
+#   --reel 은 accounts.json 계정에 youtube 설정이 있으면 같은 영상을 유튜브 쇼츠로도 넣는다(게시물ID 끝에 _쇼츠)
+#   --reel-only: --reel 에서 스토리 · 쇼츠 없이 릴스만(지운 릴스를 다시 올릴 때). --shorts-only: 쇼츠만
 #   --id-suffix 문자: 게시물ID 끝에 덧붙임. 게시기록에 같은 게시물ID가 있으면 게시하지 않고 빼므로, 다시 올릴 때 씀(예: _재게시1)
 #   PNG → JPEG(품질 90, Meta는 JPEG만 받음). queue 가지는 부모 없는 커밋 1개로 덮어씀(이미지 이력 없음)
 import sys, json, pathlib, subprocess, shutil, tempfile, datetime
@@ -35,7 +36,9 @@ def main(pub, account, at, repo_dir, reel=None, kinds=('reel',), suffix=''):
         git('clone', '--depth', '1', '--branch', 'queue', url, str(q), cwd=repo_dir); lease = git('rev-parse', 'HEAD', cwd=q)
     else:
         git('init', '-b', 'queue', cwd=q); git('remote', 'add', 'origin', url, cwd=q); lease = ''
-    todo = [(k, f'{account}_{pub.name}' + {'reel': '_릴스', 'story': '_스토리'}[k] + suffix) for k in kinds] if reel else [(None, f'{account}_{pub.name}' + suffix)]
+    cfg = json.loads((repo_dir / 'accounts.json').read_text(encoding='utf-8'))['accounts'][account]
+    kinds = [k for k in kinds if k != 'youtube' or cfg.get('youtube')]
+    todo = [(k, f'{account}_{pub.name}' + {'reel': '_릴스', 'story': '_스토리', 'youtube': '_쇼츠'}[k] + suffix) for k in kinds] if reel else [(None, f'{account}_{pub.name}' + suffix)]
     for kind, pid in todo:
         d = q / 'posts' / account / pid
         if d.exists(): shutil.rmtree(d)
@@ -47,9 +50,9 @@ def main(pub, account, at, repo_dir, reel=None, kinds=('reel',), suffix=''):
     print('대기열에 넣음', ' · '.join(p for _, p in todo), at)
 
 def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
-    if kind in ('reel', 'story'):
+    if kind in ('reel', 'story', 'youtube'):
         shutil.copy(vids[0], d / 'reel.mp4'); names = ['reel.mp4']
-        meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': cap if kind == 'reel' else '', 'type': kind, 'video': 'reel.mp4'}
+        meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': cap if kind != 'story' else '', 'type': kind, 'video': 'reel.mp4'}
         if kind == 'reel': shutil.copy(reel / '커버.jpg', d / 'cover.jpg'); meta['cover'] = 'cover.jpg'
     else:
         names = []
@@ -62,8 +65,9 @@ if __name__ == '__main__':
     a = sys.argv[1:]; rd = '.'; rl = None; sf = ''
     if '--id-suffix' in a: i = a.index('--id-suffix'); sf = a[i + 1]; a = a[:i] + a[i + 2:]
     if '--repo-dir' in a: i = a.index('--repo-dir'); rd = a[i + 1]; a = a[:i] + a[i + 2:]
-    kinds = ('reel', 'story')
+    kinds = ('reel', 'story', 'youtube')
     if '--reel' in a: i = a.index('--reel'); rl = a[i + 1]; a = a[:i] + a[i + 2:]
     if '--story' in a: i = a.index('--story'); rl = a[i + 1]; a = a[:i] + a[i + 2:]; kinds = ('story',)
     if '--reel-only' in a: a.remove('--reel-only'); kinds = ('reel',)
+    if '--shorts-only' in a: a.remove('--shorts-only'); kinds = ('youtube',)
     main(a[0], a[1], a[2], rd, rl, kinds, sf)
