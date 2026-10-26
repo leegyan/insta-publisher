@@ -37,7 +37,17 @@ jobs:
                   lines.append(f'{name}: 정상 username={r.get("username")} user_id={r.get("user_id")} ig_user_id {same}')
               except urllib.error.HTTPError as e:
                   lines.append(f'{name}: 실패 HTTP {e.code} {e.read().decode(errors="replace")[:300]}')
-          lines.append(f'GH_ADMIN_TOKEN(토큰 자동 갱신용): {"있음" if sec.get("GH_ADMIN_TOKEN") else "없음"}')
+          gh = sec.get('GH_ADMIN_TOKEN')
+          if not gh:
+              lines.append('GH_ADMIN_TOKEN(토큰 자동 갱신용): 없음')
+          else:
+              # 읽기만 함: 비밀값을 암호화할 공개키를 받아 보면 Secrets 권한이 있는지 알 수 있다
+              req = urllib.request.Request('https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/secrets/public-key')
+              req.add_header('Authorization', 'Bearer ' + gh); req.add_header('Accept', 'application/vnd.github+json')
+              try:
+                  urllib.request.urlopen(req, timeout=30).read(); lines.append('GH_ADMIN_TOKEN(토큰 자동 갱신용): 있음, 비밀값 권한 정상')
+              except urllib.error.HTTPError as e:
+                  lines.append(f'GH_ADMIN_TOKEN(토큰 자동 갱신용): 있음, 권한 확인 실패 HTTP {e.code}')
           open('기록/토큰점검.txt', 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
           print('\n'.join(lines))
           EOF
