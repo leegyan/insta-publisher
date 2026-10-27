@@ -18,10 +18,11 @@ LOG = ROOT / '기록' / '게시기록.jsonl'
 OUT = ROOT / '기록' / '성적표'
 # Meta 문서(Instagram Media Insights, v26.0) 의 REELS 지표
 REEL_METRICS = ['views', 'reach', 'ig_reels_avg_watch_time', 'ig_reels_video_view_total_time', 'reels_skip_rate',
-                'likes', 'comments', 'saved', 'shares', 'reposts', 'total_interactions']
+                'likes', 'comments', 'saved', 'shares', 'total_interactions']
+# reposts 는 문서에 있으나 Instagram 로그인 토큰에서는 'does not support the metrics: reposts'(2026-10-27 실측)라 뺐다
 REEL_FIELDS = 'id,media_type,media_product_type,timestamp,permalink,like_count,comments_count'
-# Meta 문서(Instagram User Insights): reach 는 follow_type · media_product_type, views 는 follow_type(문서에 follower_type 표기도 있음) · media_product_type
-ACCOUNT_QUERIES = [('reach', 'follow_type'), ('reach', 'media_product_type'), ('views', 'follow_type'), ('views', 'follower_type'), ('views', 'media_product_type')]
+# Meta 문서(Instagram User Insights): reach · views 모두 follow_type · media_product_type
+ACCOUNT_QUERIES = [('reach', 'follow_type'), ('reach', 'media_product_type'), ('views', 'follow_type'), ('views', 'media_product_type')]  # follower_type 은 400(2026-10-27 실측)
 
 
 def get(url, token):
