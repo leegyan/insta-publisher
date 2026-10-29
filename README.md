@@ -7,14 +7,12 @@
 |---|---|
 | `main` 가지 | 코드(publish.py · enqueue.py · accounts.json · 워크플로우)와 `기록/게시기록.jsonl`(게시 결과) |
 | `queue` 가지 | 게시 대기 발간물(`posts/<계정>/<게시물ID>/01.jpg… · post.json`). 매번 부모 없는 커밋 1개로 덮어써서 지난 이미지 이력이 쌓이지 않는다 |
-| `insights_pub.pem` | 성적표 암호화용 공개키(RSA 3072). 짝인 개인키는 저장소에 없다 |
 | Actions 비밀값 | 계정마다 토큰(`IG_TOKEN_...`), 토큰 갱신용 `GH_ADMIN_TOKEN`. 저장소 파일에는 토큰을 적지 않는다 |
 
 ## 흐름
 1. 작업 세션이 `python3 enqueue.py <발간물폴더> <계정> <게시시각>` → PNG를 JPEG로 바꿔 queue 가지에 넣는다. 릴스는 `--reel <릴스판폴더>`(mp4 1개 + 커버.jpg + 캡션.txt) → 릴스와 같은 영상의 스토리를 함께 넣는다. 커버.jpg 는 INSTA `공용/tools/reel_cover.py` 가 만들고 cover_url 로 넘긴다(없으면 대기열에 넣지 않음). 지운 릴스를 다시 올릴 때는 `--reel-only --id-suffix _재게시1` 스토리만은 `--story <릴스판폴더>`
 2. `인스타그램 게시` 워크플로우(30분마다): 게시 시각이 지난 발간물을 장마다 컨테이너 → 캐러셀 컨테이너 → media_publish로 게시 → 결과를 게시기록에 적고 queue에서 뺀다
 3. `토큰 갱신` 워크플로우(매주 월요일): 계정마다 토큰을 갱신(60일 유효)하고 비밀값을 바꾼다
-4. `릴스 성적표` 워크플로우(매일 09:23 KST, insights.py): 게시된 릴스마다 인사이트(조회 · 도달 · 평균 시청 시간 · 총 시청 시간 · 건너뛰기율 · 좋아요 · 댓글 · 저장 · 공유 · 반응 합계)와 계정 단위 도달 · 조회(팔로워/비팔로워 · 형식별, 최근 7일)를 읽어 `기록/성적표/<시각>.enc.json` 에 암호화해 쌓는다. 여는 개인키는 저장소 밖(INSTA `공용/tools/insights_key.pem`), 푸는 도구는 INSTA `공용/tools/scorecard.py`. 로그에는 수치를 찍지 않는다
 
 ## 유튜브 쇼츠
 - `enqueue.py --reel` 은 계정에 `youtube` 설정(accounts.json: client_id · secret_prefix)이 있으면 쇼츠도 넣는다(게시물ID 끝 `_쇼츠`). 쇼츠는 INSTA `<발간물>/쇼츠/<N판>/`(shorts_make.py: mp4 · 캡션.txt("구독하고") · 썸네일.jpg = 릴스 커버)을 쓰고, 릴스판과 어긋나면 넣지 않는다. 제목 = 캡션 1줄, 설명 = 캡션 전체, 공개, 썸네일 지정(thumbnails.set)
