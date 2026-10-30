@@ -1,33 +1,34 @@
-# 랭킹 이미지 1장(1080×1920 PNG)을 그린다. 기본은 라이트(밝은 바탕), "theme": "dark" 면 어두운 판. Figma figma_fill.js 와 같은 디자인을 HTML + Playwright(Chromium)로 그린다
+# 랭킹 이미지 1장(1080×1920 PNG)을 그린다. 밝은 바탕(라이트) 고정. Figma figma_fill.js 와 같은 디자인을 HTML + Playwright(Chromium)로 그린다
 # (Figma 무료 플랜은 MCP 호출이 월 20회라 매일 쓸 수 없음). 글꼴은 ranking/fonts/(OFL)
 # 쓰는 법: python3 ranking/render.py <자료.json> <결과.png>   자료 형식: 만드는법.md 2절
-import sys, json, pathlib, html
+# "image": 자료 JSON 옆 그림 파일(주제 그림, 선택) — 제목 오른쪽 위에 놓인다
+# 두 가지 모양: 순위 목록(기본, items 10~15개, 1위 가림) · 구간표("layout": "tier", rows 5~12개 ["상위 1%", "값"])
+import sys
+import json, pathlib, html
+from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 HERE = pathlib.Path(__file__).resolve().parent
-THEMES = {
-    'light': dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7461', gold='#F5A300', silver='#8E979F', bronze='#C8702E', accent='#FF6A13', badge_ink='#FFFFFF'),
-    'dark':  dict(bg='#17120E', panel='#241C16', line='#241C16', ink='#FFF6EA', sub='#B9A796', gold='#FFB21E', silver='#D9D9D9', bronze='#D98A4E', accent='#FF7A1A', badge_ink='#17120E'),
-}
-C = THEMES['light']  # 기본 라이트. 자료 JSON 에 "theme": "dark" 를 주면 어두운 판
+# 색은 라이트 하나로 고정(2026-10-30 결정)
+C = dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7461', gold='#F5A300', silver='#8E979F', bronze='#C8702E', accent='#FF6A13', badge_ink='#FFFFFF')
 
 def esc(s): return html.escape(s).replace('\n', '<br>')
 
 def build(D):
-    global C
-    C = THEMES[D.get('theme', 'light')]
     items = D['items']; N = len(items)
     if not 10 <= N <= 15: sys.exit(f'순위는 10~15개여야 함: {N}')
     rest = items[1:]; left = -(-len(rest) // 2)
     rowH = min(104, 740 // left); boxH = rowH - 16; top0 = 870
     rows = []
-    for i, name in enumerate(rest):
+    for i, it in enumerate(rest):
+        name, val = (it, '') if isinstance(it, str) else (it[0], it[1])   # 항목: "이름" 또는 ["이름", "값"]
         rank = i + 2; col = 0 if i < left else 1; row = i if i < left else i - left
         x = [80, 550][col]; y = top0 + row * rowH
         rc = C['silver'] if rank == 2 else C['bronze'] if rank == 3 else C['sub']
         rows.append(f'<div class="box" style="left:{x}px;top:{y}px;height:{boxH}px"></div>'
                     f'<div class="rank" style="left:{x+18}px;top:{y}px;height:{boxH}px;color:{rc}">{rank}</div>'
-                    f'<div class="name fit" data-max="320" style="left:{x+110}px;top:{y}px;height:{boxH}px">{esc(name)}</div>')
+                    f'<div class="name fit" data-max="{170 if val else 320}" style="left:{x+110}px;top:{y}px;height:{boxH}px">{esc(name)}</div>'
+                    + (f'<div class="val fit" data-max="150" style="left:{x+282}px;top:{y}px;height:{boxH}px">{esc(val)}</div>' if val else ''))
     endY = max(top0 + left * rowH + 16, 1590)
     fonts = HERE / 'fonts'
     return f'''<!doctype html><html><head><meta charset="utf-8"><style>
@@ -40,9 +41,11 @@ body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow
 .box{{position:absolute;width:450px;background:{C['panel']};border:2px solid {C['line']};border-radius:18px}}
 .rank{{position:absolute;width:80px;display:flex;align-items:center;justify-content:center;font-family:BHS;font-size:52px}}
 .name{{position:absolute;display:flex;align-items:center;font-weight:700;font-size:38px;white-space:nowrap}}
+.val{{position:absolute;width:150px;display:flex;align-items:center;justify-content:flex-end;font-family:BHS;font-size:34px;color:{C['accent']};white-space:nowrap}}
 </style></head><body>
 <div class="a" style="left:80px;top:250px;width:420px;height:56px;border-radius:28px;background:{C['accent']};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:{C['badge_ink']}">{esc(D['badge'])}</div>
-<div class="a bhs fit" data-max="920" style="left:80px;top:330px;font-size:116px;line-height:1.2">{esc(D['title'])}</div>
+{hero(D, 330, 690, 150)}
+<div class="a bhs fit" data-max="{600 if D.get('image') else 920}" style="left:80px;top:330px;font-size:116px;line-height:1.2">{esc(D['title'])}</div>
 <div id="top" class="a bhs" style="left:80px;top:470px;font-size:116px;line-height:1.2;color:{C['gold']}">TOP {N}</div>
 <div id="stat" class="a" style="top:520px;right:80px;font-weight:500;font-size:28px;line-height:1.45;color:{C['sub']};text-align:right">{esc(D['stat'])}</div>
 <div class="a" style="left:80px;top:640px;width:920px;height:190px;border-radius:28px;background:{C['panel']};border:3px solid {C['gold']};box-shadow:0 6px 18px rgba(0,0,0,.06)"></div>
@@ -64,9 +67,58 @@ document.fonts.ready.then(()=>{{
 }});
 </script></body></html>'''
 
+def hero(D, size, x, y):
+    # 주제 그림(선택): 자료 JSON 옆의 그림 파일. 밝은 바탕과 섞이게 multiply
+    if not D.get('image'): return ''
+    f = (SRC_DIR / D['image']).resolve()
+    if not f.exists(): sys.exit(f'그림 없음: {f}')
+    return f'<img class="a" src="{f.as_uri()}" style="left:{x}px;top:{y}px;width:{size}px;height:{size}px;object-fit:contain;mix-blend-mode:multiply;-webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent 100%);mask-image:radial-gradient(closest-side,#000 62%,transparent 100%)">'
+
+def build_tier(D):
+    # 구간표: "나는 상위 몇 %?" — rows 위(상위 1%)에서 아래(50% 등)로. 위가 좁고 아래가 넓은 피라미드 막대
+    rows = D['rows']; N = len(rows)
+    if not 5 <= N <= 12: sys.exit(f'구간은 5~12개여야 함: {N}')
+    top0 = 650; rowH = min(124, 900 // N); barH = rowH - 14
+    out = []
+    for i, (label, val) in enumerate(rows):
+        w = int(560 + (920 - 560) * i / max(1, N - 1)); x = (1080 - w) // 2; y = top0 + i * rowH
+        t = i / max(1, N - 1)
+        bg = C['gold'] if i == 0 else C['panel']
+        fg = '#FFFFFF' if i == 0 else C['ink']
+        bd = C['gold'] if i < 3 else C['line']
+        out.append(f'<div class="a" style="left:{x}px;top:{y}px;width:{w}px;height:{barH}px;border-radius:{barH//2}px;background:{bg};border:3px solid {bd};display:flex;align-items:center;justify-content:space-between;padding:0 34px">'
+                   f'<span class="bhs" style="font-size:44px;color:{fg if i == 0 else C["gold"] if i < 3 else C["sub"]}">{esc(label)}</span>'
+                   f'<span class="bhs" style="font-size:50px;color:{fg if i == 0 else C["accent"]}">{esc(val)}</span></div>')
+    endY = max(top0 + N * rowH + 20, 1590)
+    fonts = HERE / 'fonts'
+    return f'''<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{{font-family:BHS;src:url("{(fonts/'BlackHanSans-Regular.ttf').as_uri()}")}}
+@font-face{{font-family:NSK;src:url("{(fonts/'NotoSansKR-wght.ttf').as_uri()}");font-weight:100 900}}
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow:hidden;font-family:NSK;color:{C['ink']}}}
+.a{{position:absolute;white-space:nowrap}} .bhs{{font-family:BHS;font-weight:400}}
+</style></head><body>
+<div class="a" style="left:80px;top:250px;width:420px;height:56px;border-radius:28px;background:{C['accent']};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:{C['badge_ink']}">{esc(D['badge'])}</div>
+{hero(D, 360, 660, 170)}
+<div class="a bhs fit" data-max="{580 if D.get('image') else 920}" style="left:80px;top:330px;font-size:104px;line-height:1.2">{esc(D['title'])}</div>
+<div class="a bhs fit" data-max="{580 if D.get('image') else 920}" style="left:80px;top:462px;font-size:104px;line-height:1.2;color:{C['gold']}">{esc(D['title2'])}</div>
+<div class="a" style="left:80px;top:590px;width:920px;text-align:right;font-weight:500;font-size:28px;color:{C['sub']}">{esc(D['stat'])}</div>
+{''.join(out)}
+<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '너는 어디쯤이야? 댓글로 알려줘')}</div>
+<div class="a" style="left:80px;top:{endY+78}px;width:920px;text-align:center;font-weight:400;font-size:19px;line-height:1.45;color:{C['sub']};white-space:normal;word-break:keep-all">{esc(D['source'])}</div>
+<script>
+document.fonts.ready.then(()=>{{
+  for (const el of document.querySelectorAll('.fit')) {{ const m=+el.dataset.max; let fs=parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth>m && fs>12) {{ fs-=2; el.style.fontSize=fs+'px'; }} }}
+  document.body.dataset.ready='1';
+}});
+</script></body></html>'''
+
 def main(src, out):
     D = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
-    page_html = build(D)
+    global SRC_DIR
+    SRC_DIR = Path(src).resolve().parent
+    page_html = build_tier(D) if D.get('layout') == 'tier' else build(D)
     tmp = pathlib.Path(out).with_suffix('.html'); tmp.write_text(page_html, encoding='utf-8')
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1080, 'height': 1920})
