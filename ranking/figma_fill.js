@@ -33,7 +33,8 @@ crown.vectorPaths=[{windingRule:'NONZERO',data:'M 0 70 L 10 10 L 35 40 L 55 0 L 
 crown.fills=[{type:'SOLID',color:hex(C.gold)}]; root.appendChild(crown); crown.x=118; crown.y=690;
 T('1위',{x:120,y:768,size:34,family:'Black Han Sans',style:'Regular',color:C.gold,w:110,align:'CENTER'});
 T('?',{x:260,y:640,size:150,family:'Black Han Sans',style:'Regular',color:C.gold});
-T(D.hint,{x:500,y:688,size:36,w:470,align:'RIGHT',lh:130});
+const hint=T(D.hint,{x:500,y:688,size:36,w:470,align:'RIGHT',lh:130});
+while(hint.height>100 && hint.fontSize>24) hint.fontSize=hint.fontSize-2;  // 힌트는 2줄 안
 // 2위부터: 두 줄. 왼쪽 줄이 ceil((N-1)/2)개
 const rest=items.slice(1); const leftN=Math.ceil(rest.length/2);
 const rowH=Math.min(104, Math.floor(740/leftN)); const boxH=rowH-16; const top0=870;
