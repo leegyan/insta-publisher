@@ -1,15 +1,21 @@
-# 랭킹 이미지 1장(1080×1920 PNG)을 그린다. Figma figma_fill.js 와 같은 디자인을 HTML + Playwright(Chromium)로 그린다
+# 랭킹 이미지 1장(1080×1920 PNG)을 그린다. 기본은 라이트(밝은 바탕), "theme": "dark" 면 어두운 판. Figma figma_fill.js 와 같은 디자인을 HTML + Playwright(Chromium)로 그린다
 # (Figma 무료 플랜은 MCP 호출이 월 20회라 매일 쓸 수 없음). 글꼴은 ranking/fonts/(OFL)
 # 쓰는 법: python3 ranking/render.py <자료.json> <결과.png>   자료 형식: 만드는법.md 2절
 import sys, json, pathlib, html
 from playwright.sync_api import sync_playwright
 
 HERE = pathlib.Path(__file__).resolve().parent
-C = dict(bg='#17120E', panel='#241C16', ink='#FFF6EA', sub='#B9A796', gold='#FFB21E', silver='#D9D9D9', bronze='#D98A4E', accent='#FF7A1A')
+THEMES = {
+    'light': dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7461', gold='#F5A300', silver='#8E979F', bronze='#C8702E', accent='#FF6A13', badge_ink='#FFFFFF'),
+    'dark':  dict(bg='#17120E', panel='#241C16', line='#241C16', ink='#FFF6EA', sub='#B9A796', gold='#FFB21E', silver='#D9D9D9', bronze='#D98A4E', accent='#FF7A1A', badge_ink='#17120E'),
+}
+C = THEMES['light']  # 기본 라이트. 자료 JSON 에 "theme": "dark" 를 주면 어두운 판
 
 def esc(s): return html.escape(s).replace('\n', '<br>')
 
 def build(D):
+    global C
+    C = THEMES[D.get('theme', 'light')]
     items = D['items']; N = len(items)
     if not 10 <= N <= 15: sys.exit(f'순위는 10~15개여야 함: {N}')
     rest = items[1:]; left = -(-len(rest) // 2)
@@ -31,15 +37,15 @@ def build(D):
 body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow:hidden;font-family:NSK;color:{C['ink']}}}
 .a{{position:absolute;white-space:nowrap}}
 .bhs{{font-family:BHS;font-weight:400}}
-.box{{position:absolute;width:450px;background:{C['panel']};border-radius:18px}}
+.box{{position:absolute;width:450px;background:{C['panel']};border:2px solid {C['line']};border-radius:18px}}
 .rank{{position:absolute;width:80px;display:flex;align-items:center;justify-content:center;font-family:BHS;font-size:52px}}
 .name{{position:absolute;display:flex;align-items:center;font-weight:700;font-size:38px;white-space:nowrap}}
 </style></head><body>
-<div class="a" style="left:80px;top:250px;width:420px;height:56px;border-radius:28px;background:{C['accent']};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:{C['bg']}">{esc(D['badge'])}</div>
+<div class="a" style="left:80px;top:250px;width:420px;height:56px;border-radius:28px;background:{C['accent']};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:{C['badge_ink']}">{esc(D['badge'])}</div>
 <div class="a bhs fit" data-max="920" style="left:80px;top:330px;font-size:116px;line-height:1.2">{esc(D['title'])}</div>
 <div id="top" class="a bhs" style="left:80px;top:470px;font-size:116px;line-height:1.2;color:{C['gold']}">TOP {N}</div>
 <div id="stat" class="a" style="top:520px;right:80px;font-weight:500;font-size:28px;line-height:1.45;color:{C['sub']};text-align:right">{esc(D['stat'])}</div>
-<div class="a" style="left:80px;top:640px;width:920px;height:190px;border-radius:28px;background:{C['panel']};border:3px solid {C['gold']}"></div>
+<div class="a" style="left:80px;top:640px;width:920px;height:190px;border-radius:28px;background:{C['panel']};border:3px solid {C['gold']};box-shadow:0 6px 18px rgba(0,0,0,.06)"></div>
 <svg class="a" style="left:118px;top:690px" width="110" height="70" viewBox="0 0 110 70"><path d="M 0 70 L 10 10 L 35 40 L 55 0 L 75 40 L 100 10 L 110 70 Z" fill="{C['gold']}"/></svg>
 <div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{C['gold']}">1위</div>
 <div class="a bhs" style="left:262px;top:650px;font-size:150px;line-height:1.1;color:{C['gold']}">?</div>
