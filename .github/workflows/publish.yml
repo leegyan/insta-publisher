@@ -25,6 +25,7 @@ jobs:
         env:
           # 계정을 늘리면 accounts.json 과 함께 이 줄을 계정마다 하나씩 더한다
           IG_TOKEN_DON_IN_NUMBERS: ${{ secrets.IG_TOKEN_DON_IN_NUMBERS }}
+          IG_TOKEN_MYEOTWI_YA: ${{ secrets.IG_TOKEN_MYEOTWI_YA }}
           YT_DON_IN_NUMBERS_CLIENT_SECRET: ${{ secrets.YT_DON_IN_NUMBERS_CLIENT_SECRET }}
           YT_DON_IN_NUMBERS_REFRESH: ${{ secrets.YT_DON_IN_NUMBERS_REFRESH }}
           QUEUE_DIR: _queue

@@ -9,6 +9,10 @@
         "client_id": "20682840961-2v2gm46gl3umtnvi3olfq6etvh9tdnep.apps.googleusercontent.com",
         "secret_prefix": "YT_DON_IN_NUMBERS"
       }
+    },
+    "myeotwi.ya": {
+      "ig_user_id": "17841416527387398",
+      "token_secret": "IG_TOKEN_MYEOTWI_YA"
     }
   }
 }
