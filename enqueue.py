@@ -1,5 +1,7 @@
 # 발간물을 게시 대기열(queue 가지)에 넣는다. Claude 작업 세션에서 실행
-# python3 enqueue.py <발간물폴더> <계정> <게시시각 "2026-10-25T08:00:00+09:00"> [--repo-dir 경로] [--reel 릴스판폴더]
+# python3 enqueue.py <발간물폴더> <계정> [게시시각 "2026-10-25T08:00:00+09:00" | now] [--repo-dir 경로] [--reel 릴스판폴더]
+#   게시시각을 빼거나 now 면 지금 시각. 넣은 뒤 '인스타그램 게시' 워크플로우를 바로 실행한다(workflow_dispatch, 1~2분 안에 게시)
+#   게시시각이 미래면 그 시각이 지난 뒤 실행될 때 게시된다(예약 실행 없음 — 그 시각에 따로 실행해야 함)
 #   발간물폴더: 04_slides_v2/ 의 PNG 8장(이름순) + 06_캡션.txt
 #   --reel: 캐러셀 대신 릴스 + 같은 영상의 스토리(게시 1건 = 캐러셀 + 릴스 + 스토리). 릴스판폴더의 mp4 1개 + 커버.jpg(공용/tools/reel_cover.py, 없으면 넣지 않음) + 캡션.txt(없으면 발간물 06_캡션.txt). 게시물ID 끝에 _릴스 · _스토리
 #   --story: 스토리만(릴스판폴더의 mp4). 게시물ID 끝에 _스토리
@@ -49,6 +51,21 @@ def main(pub, account, at, repo_dir, reel=None, kinds=('reel',), suffix=''):
     git('-c', 'user.name=insta-publisher', '-c', 'user.email=bot@users.noreply.github.com', 'commit', '-m', 'enqueue ' + ' · '.join(p for _, p in todo), cwd=q)
     git('push', f'--force-with-lease=queue:{lease}', 'origin', 'tmp_queue:queue', cwd=q)
     print('대기열에 넣음', ' · '.join(p for _, p in todo), at)
+    dispatch(url)
+
+def dispatch(url):
+    # 넣은 즉시 게시 워크플로우 실행(Gyan 26.10.30.: 넣으면 바로 게시). 실패하면 수동 실행 명령을 알린다
+    import os, urllib.request, re as _re
+    m = _re.search(r'github\.com[:/]([^/]+)/([^/.]+)', url); repo = f'{m.group(1)}/{m.group(2)}' if m else 'leegyan/insta-publisher'
+    api = f'https://api.github.com/repos/{repo}/actions/workflows/publish.yml/dispatches'
+    h = {'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'}
+    tok = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN')
+    if tok: h['Authorization'] = f'Bearer {tok}'
+    try:
+        r = urllib.request.urlopen(urllib.request.Request(api, data=b'{"ref":"main"}', headers=h, method='POST'), timeout=30)
+        print('게시 워크플로우 실행 요청', r.status, '(1~2분 뒤 기록/게시기록.jsonl 확인)')
+    except Exception as e:
+        print('게시 워크플로우 실행 실패:', e, f'→ 수동: curl -X POST -H "Content-Type: application/json" {api} -d \'{{"ref":"main"}}\'')
 
 def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
     if kind in ('reel', 'story', 'youtube'):
@@ -86,4 +103,5 @@ if __name__ == '__main__':
     if '--story' in a: i = a.index('--story'); rl = a[i + 1]; a = a[:i] + a[i + 2:]; kinds = ('story',)
     if '--reel-only' in a: a.remove('--reel-only'); kinds = ('reel',)
     if '--shorts-only' in a: a.remove('--shorts-only'); kinds = ('youtube',)
-    main(a[0], a[1], a[2], rd, rl, kinds, sf)
+    at = a[2] if len(a) > 2 and a[2] != 'now' else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).replace(microsecond=0).isoformat()
+    main(a[0], a[1], at, rd, rl, kinds, sf)

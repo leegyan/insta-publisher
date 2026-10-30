@@ -1,8 +1,6 @@
 name: 인스타그램 게시
 on:
-  schedule:
-    - cron: '7,37 * * * *'   # 30분마다(UTC). GitHub 예약 실행은 몇 분 늦을 수 있음
-  workflow_dispatch: {}
+  workflow_dispatch: {}   # enqueue.py 가 넣은 즉시 실행한다. 30분 예약 실행은 뺌(Gyan 26.10.30.: 넣으면 바로 게시, 예약 실행은 3~7시간씩 늦었음)
 permissions:
   contents: write
 concurrency:
