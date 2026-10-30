@@ -23,7 +23,7 @@
 - Google Cloud 프로젝트: 계정의 Google 계정에 만들고, 동의 화면은 프로덕션 단계(테스트 단계는 갱신 토큰이 7일 뒤 끊김)
 
 ## 랭킹 계정(myeotwi.ya)
-`ranking/` 폴더: 매일 예약 실행 세션이 `ranking/만드는법.md` 순서대로 순위 이미지(Figma, `figma_fill.js`) → 8초 릴스(`make_reel.sh`, 자체 제작 배경음 `bgm.m4a` · `make_bgm.py`) → `enqueue.py --reel`(11:00 KST) 로 넣는다. 11:00 에는 다른 예약 실행이 `인스타그램 게시` 워크플로우를 바로 돌린다(30분 주기 예약만으로는 정각 게시가 안 됨). 쓴 소재는 `ranking/사용소재.md`
+`ranking/` 폴더: 매일 예약 실행 세션이 `ranking/만드는법.md` 순서대로 순위 이미지(Figma, `figma_fill.js`) → 8초 릴스(`make_reel.sh`, 자체 제작 배경음 `bgm.m4a` · `make_bgm.py`) → `enqueue.py --reel`(게시 시각 10:55 KST) 로 넣는다. 10:59 에는 다른 예약 실행이 `인스타그램 게시` 워크플로우를 바로 돌린다(30분 주기 예약만으로는 정각 게시가 안 됨). 쓴 소재는 `ranking/사용소재.md`
 
 ## 계정 추가
 `accounts.json`의 accounts에 `"아이디": {"ig_user_id": "숫자", "token_secret": "IG_TOKEN_이름"}`을 넣고, 같은 이름의 비밀값에 토큰을 넣는다.
