@@ -22,7 +22,7 @@ def card_html(D):
     if st == 'O':  # 원래 모양(10/30~). 10/31 Gyan: 물음표만 오른쪽으로 — 왕관 끝(228)과 힌트 칸 시작(500) 사이 가운데
         return (box() + CROWN.format(x=118, y=690, w=110, h=70, c=g)
             + f'<div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{g}">1위</div>'
-            + f'<div class="a bhs" style="left:250px;top:650px;width:250px;text-align:center;font-size:150px;line-height:1.1;color:{g}">?</div>'
+            + f'<div class="a bhs" style="left:239px;top:665px;width:250px;text-align:center;font-size:150px;line-height:1.1;color:{g};transform:scaleX(1.3)">?</div>'
             + f'<div id="hint" class="a" style="left:500px;top:688px;width:470px;font-weight:700;font-size:36px;line-height:1.3;text-align:right;white-space:normal;word-break:keep-all">{hint}</div>')
     if st == 'A':  # 왕관 | 금색 원 속 흰 ? (가운데 쪽) | 힌트 오른쪽
         return (box() + CROWN.format(x=118, y=690, w=110, h=70, c=g)
