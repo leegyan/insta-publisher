@@ -14,6 +14,44 @@ C = dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7
 
 def esc(s): return html.escape(s).replace('\n', '<br>')
 
+CROWN = '<svg class="a" style="left:{x}px;top:{y}px" width="{w}" height="{h}" viewBox="0 0 110 70"><path d="M 0 70 L 10 10 L 35 40 L 55 0 L 75 40 L 100 10 L 110 70 Z" fill="{c}"/></svg>'
+def card_html(D):
+    # 1위 카드. "qstyle": O(원래) · A~E (기본 O). 2026-10-31 Gyan: 물음표가 왼쪽으로 치우쳐 시안 5개
+    st = D.get('qstyle', 'O'); g = C['gold']; hint = esc(D['hint'])
+    box = lambda extra='': f'<div class="a" style="left:80px;top:640px;width:920px;height:190px;border-radius:28px;background:{C["panel"]};border:3px solid {g};box-shadow:0 6px 18px rgba(0,0,0,.06){extra}"></div>'
+    if st == 'O':  # 원래 모양(10/30~)
+        return (box() + CROWN.format(x=118, y=690, w=110, h=70, c=g)
+            + f'<div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{g}">1위</div>'
+            + f'<div class="a bhs" style="left:262px;top:650px;font-size:150px;line-height:1.1;color:{g}">?</div>'
+            + f'<div id="hint" class="a" style="left:500px;top:688px;width:470px;font-weight:700;font-size:36px;line-height:1.3;text-align:right;white-space:normal;word-break:keep-all">{hint}</div>')
+    if st == 'A':  # 왕관 | 금색 원 속 흰 ? (가운데 쪽) | 힌트 오른쪽
+        return (box() + CROWN.format(x=118, y=690, w=110, h=70, c=g)
+            + f'<div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{g}">1위</div>'
+            + f'<div class="a bhs" style="left:300px;top:665px;width:140px;height:140px;border-radius:70px;background:{g};color:#fff;font-size:104px;line-height:140px;text-align:center">?</div>'
+            + f'<div id="hint" class="a" style="left:480px;top:688px;width:490px;font-weight:700;font-size:36px;line-height:1.3;text-align:right;white-space:normal;word-break:keep-all">{hint}</div>')
+    if st == 'B':  # 힌트 왼쪽 정렬 | 오른쪽에 금색 상자 속 큰 ? (미스터리 박스)
+        return (box() + CROWN.format(x=118, y=668, w=62, h=40, c=g)
+            + f'<div class="a bhs" style="left:190px;top:668px;font-size:34px;line-height:40px;color:{g}">1위</div>'
+            + f'<div id="hint" class="a" style="left:118px;top:722px;width:600px;font-weight:700;font-size:36px;line-height:1.3;text-align:left;white-space:normal;word-break:keep-all">{hint}</div>'
+            + f'<div class="a bhs" style="left:790px;top:662px;width:170px;height:146px;border-radius:24px;background:{g};color:#fff;font-size:120px;line-height:146px;text-align:center;transform:rotate(-6deg)">?</div>')
+    if st == 'C':  # 왕관 1위 | 가린 이름 막대 "? ? ?" (점선) | 힌트는 막대 위
+        return (box() + CROWN.format(x=118, y=690, w=110, h=70, c=g)
+            + f'<div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{g}">1위</div>'
+            + f'<div id="hint" class="a" style="left:270px;top:658px;width:700px;font-weight:700;font-size:30px;line-height:1.3;text-align:center;white-space:normal;word-break:keep-all">{hint}</div>'
+            + f'<div class="a bhs" style="left:330px;top:760px;width:580px;height:54px;border-radius:27px;border:3px dashed {g};background:#FFF3D6;color:{g};font-size:40px;line-height:50px;text-align:center;letter-spacing:18px">???</div>')
+    if st == 'D':  # 카드 윗변에 걸친 금색 원 ? (가운데) | 왕관 · 힌트는 가운데 정렬
+        return (box() + f'<div class="a bhs" style="left:470px;top:596px;width:140px;height:140px;border-radius:70px;background:{g};border:6px solid {C["bg"]};color:#fff;font-size:100px;line-height:128px;text-align:center">?</div>'
+            + CROWN.format(x=140, y=676, w=70, h=45, c=g)
+            + f'<div class="a bhs" style="left:225px;top:676px;font-size:36px;line-height:45px;color:{g}">1위</div>'
+            + f'<div id="hint" class="a" style="left:120px;top:730px;width:840px;font-weight:700;font-size:32px;line-height:1.3;text-align:center;white-space:normal;word-break:keep-all">{hint}</div>')
+    if st == 'E':  # 금색 왼쪽 띠(왕관 + 1위, 흰색) | 힌트 가운데 | 오른쪽 끝 큰 외곽선 ?
+        return (box('') + f'<div class="a" style="left:80px;top:640px;width:200px;height:190px;border-radius:28px 0 0 28px;background:{g}"></div>'
+            + CROWN.format(x=125, y=678, w=110, h=70, c='#fff')
+            + f'<div class="a bhs" style="left:80px;top:758px;width:200px;text-align:center;font-size:38px;color:#fff">1위</div>'
+            + f'<div id="hint" class="a" style="left:310px;top:688px;width:520px;font-weight:700;font-size:36px;line-height:1.3;text-align:center;white-space:normal;word-break:keep-all">{hint}</div>'
+            + f'<div class="a bhs" style="left:840px;top:648px;width:140px;text-align:center;font-size:150px;line-height:1.1;color:transparent;-webkit-text-stroke:5px {g}">?</div>')
+    sys.exit(f'qstyle 은 O · A~E: {st}')
+
 def build(D):
     items = D['items']; N = len(items)
     if not 10 <= N <= 15: sys.exit(f'순위는 10~15개여야 함: {N}')
@@ -48,11 +86,7 @@ body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow
 <div class="a bhs fit" data-max="{600 if D.get('image') else 920}" style="left:80px;top:330px;font-size:116px;line-height:1.2">{esc(D['title'])}</div>
 <div id="top" class="a bhs" style="left:80px;top:470px;font-size:116px;line-height:1.2;color:{C['gold']}">TOP {N}</div>
 <div id="stat" class="a" style="top:520px;right:80px;font-weight:500;font-size:28px;line-height:1.45;color:{C['sub']};text-align:right">{esc(D['stat'])}</div>
-<div class="a" style="left:80px;top:640px;width:920px;height:190px;border-radius:28px;background:{C['panel']};border:3px solid {C['gold']};box-shadow:0 6px 18px rgba(0,0,0,.06)"></div>
-<svg class="a" style="left:118px;top:690px" width="110" height="70" viewBox="0 0 110 70"><path d="M 0 70 L 10 10 L 35 40 L 55 0 L 75 40 L 100 10 L 110 70 Z" fill="{C['gold']}"/></svg>
-<div class="a bhs" style="left:120px;top:768px;width:110px;text-align:center;font-size:34px;color:{C['gold']}">1위</div>
-<div class="a bhs" style="left:262px;top:650px;font-size:150px;line-height:1.1;color:{C['gold']}">?</div>
-<div id="hint" class="a" style="left:500px;top:688px;width:470px;font-weight:700;font-size:36px;line-height:1.3;text-align:right;white-space:normal;word-break:keep-all">{esc(D['hint'])}</div>
+{card_html(D)}
 {''.join(rows)}
 <div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '1위는 어디일까요?  정답은 캡션에')}</div>
 <div class="a" style="left:80px;top:{endY+78}px;width:920px;text-align:center;font-weight:400;font-size:19px;line-height:1.45;color:{C['sub']};white-space:normal;word-break:keep-all">{esc(D['source'])}</div>
