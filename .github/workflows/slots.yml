@@ -26,7 +26,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           N: ${{ github.job }}
         run: |
-          i=${N#s}; t=$(echo $TIMES | cut -d' ' -f$i)
+          i=${N#s}; read -ra T <<< "$TIMES"; t=${T[$((i-1))]:-}
           if [ -z "$t" ]; then echo "$i 번째 시각 없음"; exit 0; fi
           target=$(TZ=Asia/Seoul date -d "today $t" +%s); now=$(date +%s); w=$((target - now))
           if [ $w -gt 21000 ]; then echo "기다림이 5시간 50분을 넘음($w 초) — 시각 간격을 줄여야 함"; exit 1; fi
