@@ -1,0 +1,41 @@
+name: 시각별 게시 실행
+# 하루에 한 번 실행해 두면, 정해 둔 시각(KST)마다 '인스타그램 게시'(publish.yml)를 실행한다.
+# 대기열에 미래 시각으로 넣어 둔 게시물이 그 시각에 올라가게 하는 용도(예약 작업을 시각마다 따로 만들지 않기 위함, Gyan 26.10.31.)
+# 한 작업(job)은 최대 6시간이라 시각마다 작업을 하나씩 두고 앞 작업이 끝나면 다음 작업이 기다린다. 지난 시각은 기다리지 않고 바로 실행한다
+on:
+  workflow_dispatch:
+    inputs:
+      times:
+        description: 'KST 시각, 빈칸으로 구분(최대 6개)'
+        default: '11:00 14:00 17:00 20:00 22:00'
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: slots
+  cancel-in-progress: true
+env:
+  TIMES: ${{ inputs.times || '11:00 14:00 17:00 20:00 22:00' }}
+jobs:
+  s1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps: &wait_then_publish
+      - name: 기다렸다가 게시 실행
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ github.job }}
+        run: |
+          i=${N#s}; t=$(echo $TIMES | cut -d' ' -f$i)
+          if [ -z "$t" ]; then echo "$i 번째 시각 없음"; exit 0; fi
+          target=$(TZ=Asia/Seoul date -d "today $t" +%s); now=$(date +%s); w=$((target - now))
+          if [ $w -gt 21000 ]; then echo "기다림이 5시간 50분을 넘음($w 초) — 시각 간격을 줄여야 함"; exit 1; fi
+          if [ $w -gt 0 ]; then echo "$t KST 까지 $w 초 기다림"; sleep $w; else echo "$t 지남 — 바로 실행"; fi
+          curl -sSf -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/publish.yml/dispatches" -d '{"ref":"main"}'
+          echo "$t 게시 실행 요청함 ($(TZ=Asia/Seoul date '+%F %T') KST)"
+  s2: {needs: s1, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s3: {needs: s2, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s4: {needs: s3, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s5: {needs: s4, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s6: {needs: s5, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
