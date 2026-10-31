@@ -7,7 +7,7 @@ import base64, json, os, sys, urllib.request, urllib.error, pathlib
 MODEL = os.environ.get('CF_MODEL', '@cf/black-forest-labs/flux-1-schnell')
 STYLE = ('Glossy 3D emoji-style icon, a single object centered, soft studio lighting, '
          'on a completely plain flat warm cream background (#FFF7EB), lots of empty space around the object, '
-         'no text, no letters, no logos, no watermark.')
+         'plain undecorated surfaces with no printed text, labels or symbols on the object, no letters, no logos, no currency symbols, no watermark.')
 
 def run(prompt):
     acc, tok = os.environ['CF_ACCOUNT_ID'], os.environ['CF_API_TOKEN']
@@ -26,10 +26,24 @@ def run(prompt):
         sys.exit(f'Cloudflare 실패: {str(d)[:300]}')
     return base64.b64decode(d['result']['image'])
 
+def cutout(png):
+    # 배경(네 귀퉁이 평균색)과 가까운 픽셀을 투명하게 하고, 물체 둘레로 정사각형 자르기 → 이미지 바탕색과 상관없이 붙는다
+    import io
+    import numpy as np
+    from PIL import Image, ImageFilter
+    im = Image.open(io.BytesIO(png)).convert('RGB'); a = np.asarray(im).astype(float)
+    k = 20; c = np.concatenate([a[:k, :k], a[:k, -k:], a[-k:, :k], a[-k:, -k:]]).reshape(-1, 3).mean(0)
+    al = Image.fromarray((np.clip((np.sqrt(((a - c) ** 2).sum(2)) - 18) / 30, 0, 1) * 255).astype('uint8')).filter(ImageFilter.GaussianBlur(1.5))
+    rgba = im.convert('RGBA'); rgba.putalpha(al)
+    bb = al.point(lambda v: 255 if v > 40 else 0).getbbox() or (0, 0, *im.size)
+    x0, y0, x1, y1 = bb; s = int(max(x1 - x0, y1 - y0) * 1.06); cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    sq = Image.new('RGBA', (s, s), (0, 0, 0, 0)); sq.paste(rgba.crop((cx - s // 2, cy - s // 2, cx - s // 2 + s, cy - s // 2 + s)), (0, 0))
+    b = io.BytesIO(); sq.save(b, 'PNG'); return b.getvalue()
+
 def main(req_path, out):
     out = pathlib.Path(out); out.mkdir(parents=True, exist_ok=True)
     for it in json.loads(pathlib.Path(req_path).read_text(encoding='utf-8')):
-        png = run(it['prompt'])
+        png = cutout(run(it['prompt']))
         f = out / f"{it['name']}.png"; f.write_bytes(png)
         print('그림', f, len(png), '바이트')
 

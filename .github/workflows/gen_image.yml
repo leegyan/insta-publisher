@@ -27,6 +27,7 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           REQ: ${{ inputs.requests }}
         run: |
+          pip install -q pillow numpy
           printf '%s' "$REQ" > /tmp/req.json
           python3 ranking/cf_image.py /tmp/req.json "/tmp/out/${{ inputs.tag }}"
       - name: images 가지에 올리기
