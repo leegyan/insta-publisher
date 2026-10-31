@@ -1,0 +1,41 @@
+name: 주제 그림 만들기(Cloudflare)
+# Claude 작업 세션이 실행한다. 토큰은 저장소 Secret(CF_ACCOUNT_ID, CF_API_TOKEN)에만 있고 세션에는 넘어가지 않는다
+# 결과 PNG 는 images 가지의 <tag>/ 폴더에 올린다 → 세션이 gh api 로 받아 간다
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '결과 폴더 이름(예: 20261101_1)'
+        required: true
+      requests:
+        description: 'JSON 배열 [{"name":"라면","prompt":"a steaming bowl of ramen"}]'
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: gen-image
+  cancel-in-progress: false
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 그림 만들기
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          REQ: ${{ inputs.requests }}
+        run: |
+          printf '%s' "$REQ" > /tmp/req.json
+          python3 ranking/cf_image.py /tmp/req.json "/tmp/out/${{ inputs.tag }}"
+      - name: images 가지에 올리기
+        run: |
+          git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
+          if git ls-remote --exit-code --heads origin images; then
+            git fetch --depth 1 origin images && git checkout -B images FETCH_HEAD
+          else
+            git checkout --orphan images && git rm -rfq . && git clean -fdq
+          fi
+          mkdir -p "${{ inputs.tag }}" && cp /tmp/out/"${{ inputs.tag }}"/*.png "${{ inputs.tag }}/"
+          git add "${{ inputs.tag }}" && git commit -qm "그림 ${{ inputs.tag }}" && git push -q origin images
