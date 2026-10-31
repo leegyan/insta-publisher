@@ -6,7 +6,7 @@
 set -euo pipefail
 IMG="$1"; CAP="$2"; PUB="$3"; HERE="$(cd "$(dirname "$0")" && pwd)"
 mapfile -t BGMS < <(ls "$HERE"/bgm/*.m4a | sort)
-if [ -n "${4:-}" ]; then BGM="$HERE/bgm/$4.m4a"; else DOY=$(TZ=Asia/Seoul date +%j); BGM="${BGMS[$(( 10#$DOY % ${#BGMS[@]} ))]}"; fi
+if [ -n "${4:-}" ]; then BGM="$HERE/bgm/$4.m4a"; else DOY=$(TZ=Asia/Seoul date +%j); HR=$(TZ=Asia/Seoul date +%H); BGM="${BGMS[$(( (10#$DOY + 10#$HR) % ${#BGMS[@]} ))]}"; fi
 [ -f "$BGM" ] || { echo "배경음 없음: $BGM"; exit 1; }
 REEL="$PUB/릴스/1판"; mkdir -p "$REEL"
 python3 - "$IMG" <<'PY'
