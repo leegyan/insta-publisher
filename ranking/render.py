@@ -138,7 +138,7 @@ body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow
 <div class="a bhs fit" data-max="{580 if D.get('image') else 920}" style="left:80px;top:462px;font-size:104px;line-height:1.2;color:{C['gold']}">{esc(D['title2'])}</div>
 <div class="a" style="left:80px;top:590px;width:920px;text-align:right;font-weight:500;font-size:28px;color:{C['sub']}">{esc(D['stat'])}</div>
 {''.join(out)}
-<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '너는 어디쯤이야? 댓글로 알려줘')}</div>
+<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '나는 어디쯤일까요? 댓글로 알려주세요')}</div>
 <div class="a" style="left:80px;top:{endY+78}px;width:920px;text-align:center;font-weight:400;font-size:19px;line-height:1.45;color:{C['sub']};white-space:normal;word-break:keep-all">{esc(D['source'])}</div>
 <script>
 document.fonts.ready.then(()=>{{
@@ -184,7 +184,7 @@ body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow
 <div class="a bhs fit" data-max="{600 if D.get('image') else 920}" style="left:80px;top:466px;font-size:112px;line-height:1.2;color:{C['gold']}">{esc(D['title2'])}</div>
 <div class="a" style="left:80px;top:600px;width:920px;text-align:left;font-weight:600;font-size:28px;color:{C['sub']}">{esc(D['stat'])}</div>
 {''.join(out)}
-<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '우리 집은 몇 순위? 댓글로 알려줘')}</div>
+<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '우리 집은 몇 순위인가요? 댓글로 알려주세요')}</div>
 <div class="a" style="left:80px;top:{endY+70}px;width:920px;text-align:center;font-weight:400;font-size:19px;line-height:1.45;color:{C['sub']};white-space:normal;word-break:keep-all">{esc(D['source'])}</div>
 <script>
 document.fonts.ready.then(()=>{{
