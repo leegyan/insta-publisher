@@ -5,7 +5,7 @@
 #   발간물폴더: 04_slides_v2/ 의 PNG 8장(이름순) + 06_캡션.txt
 #   --reel: 캐러셀 대신 릴스 + 같은 영상의 스토리(게시 1건 = 캐러셀 + 릴스 + 스토리). 릴스판폴더의 mp4 1개 + 커버.jpg(공용/tools/reel_cover.py, 없으면 넣지 않음) + 캡션.txt(없으면 발간물 06_캡션.txt). 게시물ID 끝에 _릴스 · _스토리
 #   --story: 스토리만(릴스판폴더의 mp4). 게시물ID 끝에 _스토리
-#   --reel 은 accounts.json 계정에 youtube 설정이 있으면 유튜브 쇼츠도 넣는다(게시물ID 끝에 _쇼츠). 쇼츠는 <발간물>/쇼츠/<N판>/(INSTA 공용/tools/shorts_make.py: mp4 · 캡션.txt(구독하고) · 썸네일.jpg)을 쓰고, 릴스판과 어긋나면 넣지 않는다
+#   --reel 은 accounts.json 계정에 youtube 설정이 있으면 유튜브 쇼츠도 넣는다(게시물ID 끝에 _쇼츠). 쇼츠는 <발간물>/쇼츠/<N판>/(INSTA shorts_make.py: '팔로우' → '구독' 만 바꾼 쇼츠 판 mp4 · 캡션.txt · 썸네일.jpg · 쇼츠준비.json)을 쓰고, 이 릴스판의 쇼츠 판이 아니면 넣지 않는다
 #   --reel-only: --reel 에서 스토리 · 쇼츠 없이 릴스만(지운 릴스를 다시 올릴 때). --shorts-only: 쇼츠만
 #   --id-suffix 문자: 게시물ID 끝에 덧붙임. 게시기록에 같은 게시물ID가 있으면 게시하지 않고 빼므로, 다시 올릴 때 씀(예: _재게시1)
 #   PNG → JPEG(품질 90, Meta는 JPEG만 받음). queue 가지는 부모 없는 커밋 1개로 덮어씀(이미지 이력 없음)
@@ -86,15 +86,19 @@ def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
     (d / 'post.json').write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding='utf-8')
 
 def add_shorts(d, pid, account, at, reel, cap, reel_mp4):
-    # 쇼츠 폴더 검사: 영상 · 썸네일이 릴스판과 같은 파일이고, 캡션이 릴스 캡션의 "팔로우하고" 줄만 "구독하고"로 바꾼 글이어야 한다
+    # 쇼츠 폴더 검사(INSTA shorts_make.py, 26.11.01.): 쇼츠 영상 = 릴스에서 '팔로우' 만 '구독' 으로 바꾼 렌더(끝 화면 · 끝 말).
+    #   쇼츠준비.json 의 릴스 · 쇼츠 mp4 · 썸네일 SHA-1 이 지금 파일과 같고 대조(바꾼 줄 전까지 릴스와 같음)가 통과여야 한다.
+    #   썸네일 = 릴스 커버, 캡션 = 릴스 캡션에서 한 줄만 '팔로우' → '구독' 으로 바꾼 글
     s = reel.parent.parent / '쇼츠' / reel.name
     mp4 = sorted(s.glob('*.mp4')) if s.is_dir() else []
-    if len(mp4) != 1 or not (s / '캡션.txt').exists() or not (s / '썸네일.jpg').exists(): sys.exit(f'쇼츠 폴더 {s} 없음 또는 불완전 — python3 공용/tools/shorts_make.py {reel}')
-    lines = cap.splitlines(); i = [k for k, l in enumerate(lines) if l.startswith('팔로우하고')]
-    want = '\n'.join(lines[:i[0]] + ['구독하고' + lines[i[0]][len('팔로우하고'):]] + lines[i[0] + 1:]) if len(i) == 1 else None
-    scap = (s / '캡션.txt').read_text(encoding='utf-8').strip()
-    bad = [n for n, ok in [('영상', mp4[0].read_bytes() == reel_mp4.read_bytes()), ('썸네일', (s / '썸네일.jpg').read_bytes() == (reel / '커버.jpg').read_bytes()), ('캡션', scap == want)] if not ok]
-    if bad: sys.exit(f'쇼츠 폴더가 릴스판과 다름({", ".join(bad)}) — python3 공용/tools/shorts_make.py {reel} 다시')
+    if len(mp4) != 1 or not (s / '캡션.txt').exists() or not (s / '썸네일.jpg').exists() or not (s / '쇼츠준비.json').exists(): sys.exit(f'쇼츠 폴더 {s} 없음 또는 불완전 — INSTA reel_cover.py {reel} (shorts_make.py)')
+    sj = json.loads((s / '쇼츠준비.json').read_text(encoding='utf-8')); h = lambda f: hashlib.sha1(f.read_bytes()).hexdigest()
+    lines = cap.splitlines(); scap = (s / '캡션.txt').read_text(encoding='utf-8').strip(); sl = scap.splitlines()
+    dl = [i for i in range(len(lines)) if i < len(sl) and lines[i] != sl[i]]
+    cap_ok = len(sl) == len(lines) and len(dl) == 1 and '팔로우' in lines[dl[0]] and sl[dl[0]] == lines[dl[0]].replace('팔로우', '구독')
+    bad = [n for n, ok in [('릴스 영상', sj.get('릴스_mp4_sha1') == h(reel_mp4)), ('쇼츠 영상', sj.get('쇼츠_mp4_sha1') == h(mp4[0])), ('대조', sj.get('대조', {}).get('결과') == '통과'),
+                           ('썸네일', (s / '썸네일.jpg').read_bytes() == (reel / '커버.jpg').read_bytes()), ('캡션', cap_ok)] if not ok]
+    if bad: sys.exit(f'쇼츠 폴더가 이 릴스판의 쇼츠 판이 아님({", ".join(bad)}) — INSTA reel_cover.py {reel} 다시')
     shutil.copy(mp4[0], d / 'reel.mp4'); shutil.copy(s / '썸네일.jpg', d / 'cover.jpg')
     meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': scap, 'type': 'youtube', 'video': 'reel.mp4', 'cover': 'cover.jpg'}
     (d / 'post.json').write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding='utf-8')
