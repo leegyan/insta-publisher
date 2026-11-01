@@ -42,3 +42,5 @@
 {"post_id": "thumbnail_14BqXkY64xs", "warning": "썸네일 실패 14BqXkY64xs HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"The authenticated user doesn't have permissions to upload and set custom video thumbnails.\",\n    \"errors\": [\n      {\n        \"message\": \"The authenticated user doesn't have permissions to upload and set custom video thumbnails.\",\n        \"domain\": \"you", "at": "2026-11-01T17:59:31+09:00"}
 {"post_id": "hyogwa.check_20261101_콜라겐크림_쇼츠", "account": "hyogwa.check", "media_id": "14BqXkY64xs", "published_at": "2026-11-01T17:59:31+09:00"}
 {"post_id": "hyogwa.check_20261101_콜라겐크림_스토리", "account": "hyogwa.check", "media_id": "17920725651461154", "published_at": "2026-11-01T18:00:06+09:00"}
+{"post_id": "myeotwi.ya_20261101_나이대별월소득_릴스", "account": "myeotwi.ya", "media_id": "18170660578471641", "published_at": "2026-11-01T20:00:48+09:00"}
+{"post_id": "myeotwi.ya_20261101_나이대별월소득_스토리", "account": "myeotwi.ya", "media_id": "17960110077015175", "published_at": "2026-11-01T20:01:24+09:00"}
