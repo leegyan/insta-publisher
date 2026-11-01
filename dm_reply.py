@@ -51,14 +51,18 @@ def main(mode):
         for media in acc_dm['media']:
             if not media.get('on', True): continue
             res = DM['resources'][media['resource']]
-            text = res['message'].replace('{link}', res['link'])
+            # 문구 돌려 쓰기: messages 목록(10개)을 보낸 순서대로 하나씩 돌린다 — 같은 글을 계속 보내면 스팸처럼 보여서(Gyan 26.11.02 08:57)
+            # 모든 문구 끝에 footer(모든 분께 같은 자료 · 개인 상담 안 함)를 붙인다
+            msgs = res.get('messages') or [res['message']]
             for c in comments(media['media_id'], tok):
                 cid = c['id']; who = c.get('from', {})
-                if cid in done or who.get('username') == name: continue   # 이미 보냄 · 내 댓글
+                if cid in done or cid == '_rot' or who.get('username') == name: continue   # 이미 보냄 · 내 댓글
                 age = now - datetime.datetime.fromisoformat(c['timestamp'].replace('+0000', '+00:00'))
                 if age.days >= 7: done[cid] = 'expired'; continue          # 7일 지나면 비공개 답장 불가
                 if mode == 'dry':
                     print(f'[보낼 예정] {name} ← 댓글 {cid} @{who.get("username")}'); continue
+                k = done.get('_rot', 0); done['_rot'] = k + 1
+                text = msgs[k % len(msgs)].replace('{link}', res['link']) + ('\n\n' + res['footer'] if res.get('footer') else '')
                 try:
                     http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': cid}, 'message': {'text': text}}, tok)
                     done[cid] = now.isoformat(timespec='seconds'); sent += 1
