@@ -1,5 +1,5 @@
-점검 시각 2026-11-01T16:39:28+09:00
+점검 시각 2026-11-01T16:49:10+09:00
 don.in.numbers: 정상 username=don.in.numbers user_id=17841425349888997 ig_user_id 일치
 myeotwi.ya: 정상 username=myeotwi.ya user_id=17841416527387398 ig_user_id 일치
-hyogwa.check: 비밀값 IG_TOKEN_HYOGWA_CHECK 없음
+hyogwa.check: 정상 username=hyogwa.check user_id=17841454363638550 ig_user_id 일치
 GH_ADMIN_TOKEN(토큰 자동 갱신용): 있음, 비밀값 권한 정상
