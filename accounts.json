@@ -22,6 +22,10 @@
         "secret_prefix": "YT_HYOGWA_CHECK",
         "client_secret_prefix": "YT_DON_IN_NUMBERS"
       }
+    },
+    "cashwood.lab": {
+      "ig_user_id": "17841462444541766",
+      "token_secret": "IG_TOKEN_CASHWOOD_LAB"
     }
   }
 }

@@ -25,6 +25,7 @@ jobs:
           IG_TOKEN_DON_IN_NUMBERS: ${{ secrets.IG_TOKEN_DON_IN_NUMBERS }}
           IG_TOKEN_MYEOTWI_YA: ${{ secrets.IG_TOKEN_MYEOTWI_YA }}
           IG_TOKEN_HYOGWA_CHECK: ${{ secrets.IG_TOKEN_HYOGWA_CHECK }}
+          IG_TOKEN_CASHWOOD_LAB: ${{ secrets.IG_TOKEN_CASHWOOD_LAB }}
         run: python3 insights.py
       - name: 결과 저장
         run: |
