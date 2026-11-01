@@ -1,0 +1,28 @@
+name: 댓글 DM 자료
+# 댓글 단 분께 자료 링크를 DM(비공개 답장)으로 보낸다. dm.json 에서 on=true 인 게시물만.
+# 지금은 손으로만 실행(권한 instagram_business_manage_comments · manage_messages 추가 + 토큰 재발급 뒤 schedule 을 켠다)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry = 보내지 않고 대상만 찍기 / run = 보내기'
+        default: dry
+  # schedule:
+  #   - cron: '7,37 * * * *'   # 30분마다(GitHub 예약은 몇 분 늦을 수 있음)
+permissions:
+  contents: write
+concurrency: dm
+jobs:
+  dm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 보내기
+        env:
+          IG_TOKEN_CASHWOOD_LAB: ${{ secrets.IG_TOKEN_CASHWOOD_LAB }}
+        run: python3 dm_reply.py ${{ github.event.inputs.mode || 'run' }}
+      - name: 기록 저장
+        run: |
+          git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
+          git add 기록/dm_보낸댓글.json 기록/dm기록.jsonl 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m 'DM 기록' && git push)
