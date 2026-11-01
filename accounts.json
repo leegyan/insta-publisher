@@ -13,6 +13,10 @@
     "myeotwi.ya": {
       "ig_user_id": "17841416527387398",
       "token_secret": "IG_TOKEN_MYEOTWI_YA"
+    },
+    "hyogwa.check": {
+      "ig_user_id": "17841454363638550",
+      "token_secret": "IG_TOKEN_HYOGWA_CHECK"
     }
   }
 }
