@@ -9,7 +9,7 @@
 #   --reel-only: --reel 에서 스토리 · 쇼츠 없이 릴스만(지운 릴스를 다시 올릴 때). --shorts-only: 쇼츠만
 #   --id-suffix 문자: 게시물ID 끝에 덧붙임. 게시기록에 같은 게시물ID가 있으면 게시하지 않고 빼므로, 다시 올릴 때 씀(예: _재게시1)
 #   PNG → JPEG(품질 90, Meta는 JPEG만 받음). queue 가지는 부모 없는 커밋 1개로 덮어씀(이미지 이력 없음)
-import sys, json, pathlib, subprocess, shutil, tempfile, datetime
+import hashlib, sys, json, pathlib, subprocess, shutil, tempfile, datetime
 from PIL import Image
 
 def git(*a, cwd): return subprocess.run(['git', *a], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
@@ -25,6 +25,12 @@ def main(pub, account, at, repo_dir, reel=None, kinds=('reel',), suffix=''):
             if not cv.exists(): sys.exit('릴스판 폴더에 커버.jpg 없음(python3 공용/tools/reel_cover.py <릴스판폴더>)')
             if cv.stat().st_size > 8 * 1024 * 1024: sys.exit('커버.jpg 8MB 초과(Meta 한도)')
         cf = reel / '캡션.txt'; cap = (cf if cf.exists() else pub / '06_캡션.txt').read_text(encoding='utf-8').strip()
+        # 게시 준비 점검 관문(INSTA reel_pipeline.py 9 ready, 26.10.31.): 발간준비.json 이 없거나 그 뒤 영상 · 커버 · 캡션이 바뀌었으면 넣지 않는다
+        rp = reel / '발간준비.json'
+        if not rp.exists(): sys.exit('릴스판 폴더에 발간준비.json 없음 — INSTA 에서 python3 공용/tools/reel_pipeline.py <작업폴더> ready 를 먼저 통과시킬 것')
+        rj = json.loads(rp.read_text(encoding='utf-8')); h = lambda f: hashlib.sha1(f.read_bytes()).hexdigest()
+        diff = [n for n, f, k in (('mp4', vids[0], 'mp4_sha1'), ('커버', reel / '커버.jpg', '커버_sha1'), ('캡션', cf, '캡션_sha1')) if not f.exists() or h(f) != rj.get(k)]
+        if diff: sys.exit('게시 준비 점검 뒤 바뀜: ' + ', '.join(diff) + ' — ready 를 다시 통과시킬 것')
         pngs = []
     else:
         pngs = sorted((pub / '04_slides_v2').glob('*.png'))
