@@ -70,8 +70,9 @@ def form_post(url, fields):
 
 
 def yt_access(yt):
-    pre = yt['secret_prefix']; sec, ref = SECRETS.get(pre + '_CLIENT_SECRET'), SECRETS.get(pre + '_REFRESH')
-    if not sec or not ref: raise RuntimeError(f'비밀값 {pre}_CLIENT_SECRET · {pre}_REFRESH 없음')
+    # client_secret_prefix: 다른 계정의 Google 앱 키를 같이 쓸 때 그 계정의 접두어(Gyan 26.11.01. hyogwa.check 는 don.in.numbers 앱 키). 갱신 토큰은 계정마다 따로(secret_prefix)
+    pre = yt['secret_prefix']; cp = yt.get('client_secret_prefix', pre); sec, ref = SECRETS.get(cp + '_CLIENT_SECRET'), SECRETS.get(pre + '_REFRESH')
+    if not sec or not ref: raise RuntimeError(f'비밀값 {cp}_CLIENT_SECRET · {pre}_REFRESH 없음')
     return form_post('https://oauth2.googleapis.com/token', {'client_id': yt['client_id'], 'client_secret': sec, 'refresh_token': ref, 'grant_type': 'refresh_token'})['access_token']
 
 
@@ -200,7 +201,7 @@ def yt_auth(account, url):
     code = urllib.parse.parse_qs(urllib.parse.urlparse(url.strip()).query).get('code', [''])[0]
     if not code: sys.exit('주소에 code 가 없음 — 허용 뒤 넘어간 127.0.0.1 주소 전체를 넣는다')
     print('::add-mask::' + code)
-    r = form_post('https://oauth2.googleapis.com/token', {'code': code, 'client_id': yt['client_id'], 'client_secret': SECRETS[pre + '_CLIENT_SECRET'], 'redirect_uri': YT_REDIRECT, 'grant_type': 'authorization_code'})
+    r = form_post('https://oauth2.googleapis.com/token', {'code': code, 'client_id': yt['client_id'], 'client_secret': SECRETS[yt.get('client_secret_prefix', pre) + '_CLIENT_SECRET'], 'redirect_uri': YT_REDIRECT, 'grant_type': 'authorization_code'})
     if 'refresh_token' not in r: sys.exit('갱신 토큰을 받지 못함(이미 쓴 code 이거나 prompt=consent 가 빠짐)')
     print('::add-mask::' + r['refresh_token'])
     gh_secret_setter()(pre + '_REFRESH', r['refresh_token'])

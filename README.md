@@ -18,7 +18,7 @@
 
 ## 유튜브 쇼츠
 - `enqueue.py --reel` 은 계정에 `youtube` 설정(accounts.json: client_id · secret_prefix)이 있으면 쇼츠도 넣는다(게시물ID 끝 `_쇼츠`). 쇼츠는 INSTA `<발간물>/쇼츠/<N판>/`(shorts_make.py: mp4 · 캡션.txt("구독하고") · 썸네일.jpg = 릴스 커버)을 쓰고, 릴스판과 어긋나면 넣지 않는다. 제목 = 캡션 1줄, 설명 = 캡션 전체, 공개, 썸네일 지정(thumbnails.set)
-- 비밀값: `<secret_prefix>_CLIENT_SECRET`(Google Cloud 앱 키 비밀번호, 사람이 넣음) · `<secret_prefix>_REFRESH`(아래 연결로 자동)
+- 비밀값: `<secret_prefix>_CLIENT_SECRET`(Google Cloud 앱 키 비밀번호, 사람이 넣음) · `<secret_prefix>_REFRESH`(아래 연결로 자동). 다른 계정의 앱 키를 같이 쓰면 accounts.json youtube 에 `client_secret_prefix`(그 계정 접두어)와 같은 `client_id` 를 적고, 앱 키 비밀값은 새로 넣지 않는다(hyogwa.check = don.in.numbers 앱 키, 26.11.01.)
 - 연결(계정마다 한 번): `python3 publish.py yt_url <계정>` 주소를 열어 허용 → 넘어간 127.0.0.1 주소 전체를 `유튜브 연결` 워크플로우 url 에 넣고 실행
 - Google Cloud 프로젝트: 계정의 Google 계정에 만들고, 동의 화면은 프로덕션 단계(테스트 단계는 갱신 토큰이 7일 뒤 끊김)
 

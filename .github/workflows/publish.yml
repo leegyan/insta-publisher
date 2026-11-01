@@ -27,6 +27,7 @@ jobs:
           IG_TOKEN_HYOGWA_CHECK: ${{ secrets.IG_TOKEN_HYOGWA_CHECK }}
           YT_DON_IN_NUMBERS_CLIENT_SECRET: ${{ secrets.YT_DON_IN_NUMBERS_CLIENT_SECRET }}
           YT_DON_IN_NUMBERS_REFRESH: ${{ secrets.YT_DON_IN_NUMBERS_REFRESH }}
+          YT_HYOGWA_CHECK_REFRESH: ${{ secrets.YT_HYOGWA_CHECK_REFRESH }}   # 앱 키는 YT_DON_IN_NUMBERS_CLIENT_SECRET 를 같이 씀(accounts.json client_secret_prefix)
           QUEUE_DIR: _queue
         run: python3 publish.py run
       - name: 게시 기록 저장
