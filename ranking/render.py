@@ -2,7 +2,7 @@
 # (Figma 무료 플랜은 MCP 호출이 월 20회라 매일 쓸 수 없음). 글꼴은 ranking/fonts/(OFL)
 # 쓰는 법: python3 ranking/render.py <자료.json> <결과.png>   자료 형식: 만드는법.md 2절
 # "image": 자료 JSON 옆 그림 파일(주제 그림, 선택) — 제목 오른쪽 위에 놓인다
-# 두 가지 모양: 순위 목록(기본, items 10~15개, 1위 가림) · 구간표("layout": "tier", rows 5~12개 ["상위 1%", "값"])
+# 세 가지 모양: 순위 목록(기본, items 10~15개, 1위 가림) · 구간표("layout": "tier", rows 5~12개 ["상위 1%", "값"]) · 사다리("layout": "ladder", rows 5~9개 ["이름", "설명", "값 범위"], 위가 가장 높은 순위)
 import sys
 import json, pathlib, html
 from pathlib import Path
@@ -148,11 +148,57 @@ document.fonts.ready.then(()=>{{
 }});
 </script></body></html>'''
 
+def build_ladder(D):
+    # 사다리(Gyan 2026-11-01 "몇위야 계정도 이런 느낌으로 — 아이덴티티는 챙기면서 가져올 것만"): "우리 집은 몇 순위?"
+    # 빈틈없는 구간 전체(누구나 한 줄에 들어감) · 아래 1순위 → 위 N순위 · 위로 갈수록 긴 막대 · 칸마다 [이름, 작은 설명, 값 범위]
+    # rows 는 위(가장 높은 순위)부터 적는다. 순위 번호는 아래부터 1. 맨 위 줄은 금색으로 채움
+    rows = D['rows']; N = len(rows)
+    if not 5 <= N <= 9: sys.exit(f'사다리 줄은 5~9개여야 함: {N}')
+    top0 = 660; rowH = min(132, 900 // N); barH = rowH - 16
+    out = []
+    for i, r in enumerate(rows):
+        label, sub, val = (r + ['', ''])[:3] if isinstance(r, list) else (r, '', '')
+        rank = N - i; t = i / max(1, N - 1)
+        w = int(764 - (764 - 540) * t); x = 236; y = top0 + i * rowH
+        top = i == 0
+        bg = C['gold'] if top else C['panel']; fg = '#FFFFFF' if top else C['ink']
+        bd = C['gold'] if top else C['line']
+        rc = C['gold'] if rank >= N - 2 else C['sub']
+        out.append(f'<div class="a bhs" style="left:60px;top:{y}px;width:160px;height:{barH}px;display:flex;align-items:center;justify-content:flex-end;font-size:46px;color:{rc}">{rank}<span style="font-size:30px;margin-left:2px">순위</span></div>'
+                   f'<div class="a" style="left:{x}px;top:{y}px;width:{w}px;height:{barH}px;border-radius:20px;background:{bg};border:3px solid {bd};display:flex;align-items:center;justify-content:space-between;padding:0 28px">'
+                   f'<span style="display:flex;flex-direction:column;justify-content:center"><span class="fit" data-max="{w-330}" style="font-weight:800;font-size:36px;line-height:1.15;color:{fg}">{esc(label)}</span>'
+                   + (f'<span style="font-weight:500;font-size:21px;line-height:1.3;color:{"#FFF6E0" if top else C["sub"]}">{esc(sub)}</span>' if sub else '')
+                   + f'</span><span class="bhs fit" data-max="300" style="font-size:40px;color:{fg if top else C["accent"]}">{esc(val)}</span></div>')
+    endY = max(top0 + N * rowH + 24, 1590)
+    fonts = HERE / 'fonts'
+    return f'''<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{{font-family:BHS;src:url("{(fonts/'BlackHanSans-Regular.ttf').as_uri()}")}}
+@font-face{{font-family:NSK;src:url("{(fonts/'NotoSansKR-wght.ttf').as_uri()}");font-weight:100 900}}
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{width:1080px;height:1920px;background:{C['bg']};position:relative;overflow:hidden;font-family:NSK;color:{C['ink']}}}
+.a{{position:absolute;white-space:nowrap}} .bhs{{font-family:BHS;font-weight:400}}
+</style></head><body>
+<div class="a" style="left:80px;top:250px;width:420px;height:56px;border-radius:28px;background:{C['accent']};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:{C['badge_ink']}">{esc(D['badge'])}</div>
+{hero(D, 330, 690, 180)}
+<div class="a bhs fit" data-max="{600 if D.get('image') else 920}" style="left:80px;top:330px;font-size:112px;line-height:1.2">{esc(D['title'])}</div>
+<div class="a bhs fit" data-max="{600 if D.get('image') else 920}" style="left:80px;top:466px;font-size:112px;line-height:1.2;color:{C['gold']}">{esc(D['title2'])}</div>
+<div class="a" style="left:80px;top:600px;width:920px;text-align:left;font-weight:600;font-size:28px;color:{C['sub']}">{esc(D['stat'])}</div>
+{''.join(out)}
+<div class="a" style="left:80px;top:{endY}px;width:920px;text-align:center;font-weight:700;font-size:34px;color:{C['accent']}">{esc(D.get('cta') or '우리 집은 몇 순위? 댓글로 알려줘')}</div>
+<div class="a" style="left:80px;top:{endY+70}px;width:920px;text-align:center;font-weight:400;font-size:19px;line-height:1.45;color:{C['sub']};white-space:normal;word-break:keep-all">{esc(D['source'])}</div>
+<script>
+document.fonts.ready.then(()=>{{
+  for (const el of document.querySelectorAll('.fit')) {{ const m=+el.dataset.max; let fs=parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth>m && fs>12) {{ fs-=2; el.style.fontSize=fs+'px'; }} }}
+  document.body.dataset.ready='1';
+}});
+</script></body></html>'''
+
 def main(src, out):
     D = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
     global SRC_DIR
     SRC_DIR = Path(src).resolve().parent
-    page_html = build_tier(D) if D.get('layout') == 'tier' else build(D)
+    page_html = {'tier': build_tier, 'ladder': build_ladder}.get(D.get('layout'), build)(D)
     tmp = pathlib.Path(out).with_suffix('.html'); tmp.write_text(page_html, encoding='utf-8')
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1080, 'height': 1920})
