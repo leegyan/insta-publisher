@@ -95,6 +95,7 @@ def main(mode):
 
 
 FILE_F = ROOT / '기록' / 'dm_파일보냄.json'
+WAIT_F = ROOT / '기록' / 'dm_대기.json'   # 댓글 단 사람(IGSID) → 받을 자료 목록. 버튼 누르면 여기 적힌 자료만 보냄
 
 
 def followup(mode):
@@ -142,6 +143,7 @@ def hook():
     #   comment → 비공개 답장(글 + 빠른 답장 버튼 '가이드 받기') + 공개 답글 / message(버튼 누름 · 아무 답장) → PDF 파일 자체
     evs = json.loads(os.environ.get('EVENTS', '[]')); done = json.loads(DONE_F.read_text(encoding='utf-8')) if DONE_F.exists() else {}
     sent = json.loads(FILE_F.read_text(encoding='utf-8')) if FILE_F.exists() else {}
+    wait = json.loads(WAIT_F.read_text(encoding='utf-8')) if WAIT_F.exists() else {}
     by_id = {a['ig_user_id']: n for n, a in CFG['accounts'].items()}
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
     for e in evs:
@@ -157,8 +159,13 @@ def hook():
             first = {'text': res.get('first_text', '댓글 고마워요! 아래 버튼을 누르면 가이드 PDF를 바로 보내드려요.'),
                      'quick_replies': [{'content_type': 'text', 'title': res.get('button', '가이드 받기'), 'payload': 'GET_' + m['resource']}]}
             try:
-                http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': e['comment_id']}, 'message': first}, tok)
-                done[e['comment_id']] = now; print(f'{name} 댓글 → 첫 DM(버튼) 보냄')
+                r = http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': e['comment_id']}, 'message': first}, tok)
+                done[e['comment_id']] = now; print(f'{name} 댓글 → 첫 DM(버튼) 보냄 · 자료 {m["resource"]}')
+                rid = str((r or {}).get('recipient_id') or '')
+                if rid:
+                    lst = wait.setdefault(f'{name}:{rid}', [])
+                    if m['resource'] not in lst: lst.append(m['resource'])
+                else: print('  받는 사람 번호(recipient_id)가 응답에 없음 — 버튼 정보(payload)로만 자료를 고름')
                 reps = DM.get('comment_replies', [])
                 if reps:
                     k = done.get('_rot', 0); done['_rot'] = k + 1
@@ -166,17 +173,25 @@ def hook():
                     except RuntimeError as x: print(f'공개 답글 실패: {str(x)[:200]}')
             except RuntimeError as x: print(f'{name} 첫 DM 실패: {str(x)[:300]}')
         elif e['kind'] == 'message':
-            res_key = on[0]['resource']; res = DM['resources'][res_key]; key = f'{name}:{e["sender"]}:{res_key}'
-            if key in sent: continue
-            try:
-                http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'attachment': {'type': 'file', 'payload': {'url': res['file_url']}}}}, tok)
-                sent[key] = now; print(f'{name} → PDF 파일 보냄')
-                if res.get('footer'):
-                    try: http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'text': res['footer']}}, tok)
-                    except RuntimeError: pass
-            except RuntimeError as x: print(f'{name} 파일 실패: {str(x)[:300]}')
+            # 보낼 자료: 버튼 정보(GET_자료)가 있으면 그 자료, 없으면 이 사람이 댓글 단 릴스의 자료(대기 목록). 둘 다 없으면 보내지 않음
+            pl = str(e.get('payload') or '')
+            keys = [pl[4:]] if pl.startswith('GET_') and pl[4:] in DM['resources'] else list(wait.get(f'{name}:{e["sender"]}', []))
+            if not keys: print(f'{name} 메시지 — 보낼 자료 없음(댓글 기록이 없거나 이미 보냄)'); continue
+            for res_key in keys:
+                res = DM['resources'][res_key]; key = f'{name}:{e["sender"]}:{res_key}'
+                if key in sent: continue
+                try:
+                    http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'attachment': {'type': 'file', 'payload': {'url': res['file_url']}}}}, tok)
+                    sent[key] = now; print(f'{name} → PDF 파일 보냄 · 자료 {res_key}')
+                    lst = wait.get(f'{name}:{e["sender"]}', [])
+                    if res_key in lst: lst.remove(res_key)
+                    if res.get('footer'):
+                        try: http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'text': res['footer']}}, tok)
+                        except RuntimeError: pass
+                except RuntimeError as x: print(f'{name} 파일 실패({res_key}): {str(x)[:300]}')
     DONE_F.parent.mkdir(exist_ok=True)
     DONE_F.write_text(json.dumps(done, ensure_ascii=False, indent=0), encoding='utf-8'); FILE_F.write_text(json.dumps(sent, ensure_ascii=False, indent=0), encoding='utf-8')
+    WAIT_F.write_text(json.dumps({k: v for k, v in wait.items() if v}, ensure_ascii=False, indent=0), encoding='utf-8')
 
 
 def subscribe(mode):

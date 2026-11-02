@@ -42,9 +42,9 @@ export default {
     try { body = JSON.parse(raw); } catch (e) {}
     const events = [];
     for (const en of body.entry || []) {
-      for (const m of en.messaging || []) {   // DM(받은 메시지 · 빠른 답장 누름). 우리가 보낸 메시지(is_echo)는 뺀다
+      for (const m of en.messaging || []) {   // DM(받은 메시지 · 빠른 답장 누름 — 누른 버튼의 payload 'GET_자료' 를 함께 넘김). 우리가 보낸 메시지(is_echo)는 뺀다
         if (m.message && !m.message.is_echo && m.sender && m.sender.id !== en.id)
-          events.push({ kind: 'message', account_id: en.id, sender: m.sender.id });
+          events.push({ kind: 'message', account_id: en.id, sender: m.sender.id, payload: (m.message.quick_reply || {}).payload || '' });
       }
       for (const ch of en.changes || []) {   // 댓글
         if (ch.field === 'comments' && ch.value && ch.value.id && !(ch.value.from && ch.value.from.id === en.id))

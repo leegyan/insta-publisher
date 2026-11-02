@@ -19,5 +19,5 @@ jobs:
       - name: 기록 저장
         run: |
           git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
-          git add 기록/dm_보낸댓글.json 기록/dm_파일보냄.json 2>/dev/null || true
+          git add 기록/dm_보낸댓글.json 기록/dm_파일보냄.json 기록/dm_대기.json 2>/dev/null || true
           git diff --cached --quiet || (git commit -m 'DM 즉시 기록' && git pull --rebase -q && git push)
