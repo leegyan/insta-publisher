@@ -179,8 +179,21 @@ def hook():
     DONE_F.write_text(json.dumps(done, ensure_ascii=False, indent=0), encoding='utf-8'); FILE_F.write_text(json.dumps(sent, ensure_ascii=False, indent=0), encoding='utf-8')
 
 
+def subscribe(mode):
+    """계정을 앱 웹훅(comments·messages)에 구독. mode=sub_check 는 조회만."""
+    for name in DM['accounts']:
+        acc = CFG['accounts'][name]; tok = os.environ.get(acc['token_secret'])
+        if not tok: print(name, '토큰 없음'); continue
+        if mode == 'subscribe':
+            r = http('POST', f'{API}/me/subscribed_apps?subscribed_fields=comments,messages', token=tok)
+            print(name, '구독 결과', r)
+        r = http('GET', f'{API}/me/subscribed_apps', token=tok)
+        print(name, '현재 구독', json.dumps(r, ensure_ascii=False))
+
+
 if __name__ == '__main__':
     m = sys.argv[1] if len(sys.argv) > 1 else 'dry'
     if m == 'hook': hook(); sys.exit(0)
+    if m in ('subscribe', 'sub_check'): subscribe(m); sys.exit(0)
     if m in ('followup', 'followup_dry'): followup('dry' if m == 'followup_dry' else 'run')
     else: main(m)
