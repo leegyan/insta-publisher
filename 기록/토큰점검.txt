@@ -1,6 +1,14 @@
-점검 시각 2026-11-02T03:45:48+09:00
+점검 시각 2026-11-02T10:03:00+09:00
 don.in.numbers: 정상 username=don.in.numbers user_id=17841425349888997 ig_user_id 일치
+  don.in.numbers DM 목록 읽기(manage_messages): 가능
+  don.in.numbers 댓글 읽기(manage_comments): 가능
 myeotwi.ya: 정상 username=myeotwi.ya user_id=17841416527387398 ig_user_id 일치
+  myeotwi.ya DM 목록 읽기(manage_messages): 가능
+  myeotwi.ya 댓글 읽기(manage_comments): 가능
 hyogwa.check: 정상 username=hyogwa.check user_id=17841454363638550 ig_user_id 일치
+  hyogwa.check DM 목록 읽기(manage_messages): 가능
+  hyogwa.check 댓글 읽기(manage_comments): 가능
 cashwood.lab: 정상 username=cashwood.lab user_id=17841462444541766 ig_user_id 일치
+  cashwood.lab DM 목록 읽기(manage_messages): 가능
+  cashwood.lab 댓글 읽기(manage_comments): 게시물 없음 — 시험 못 함
 GH_ADMIN_TOKEN(토큰 자동 갱신용): 있음, 비밀값 권한 정상
