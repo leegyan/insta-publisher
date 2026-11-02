@@ -1,0 +1,23 @@
+name: DM 즉시
+# 웹훅(Vercel hook/api/ig.js)이 repository_dispatch(ig_event)로 깨운다. 댓글 → 첫 DM(버튼) + 공개 답글, 답장 · 버튼 누름 → PDF 파일
+on:
+  repository_dispatch:
+    types: [ig_event]
+permissions:
+  contents: write
+concurrency: dm
+jobs:
+  hook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 처리
+        env:
+          IG_TOKEN_CASHWOOD_LAB: ${{ secrets.IG_TOKEN_CASHWOOD_LAB }}
+          EVENTS: ${{ toJSON(github.event.client_payload.events) }}
+        run: python3 dm_reply.py hook
+      - name: 기록 저장
+        run: |
+          git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
+          git add 기록/dm_보낸댓글.json 기록/dm_파일보냄.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m 'DM 즉시 기록' && git pull --rebase -q && git push)

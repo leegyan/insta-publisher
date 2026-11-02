@@ -137,7 +137,50 @@ def followup(mode):
     print(f'파일 보냄 {n}통')
 
 
+def hook():
+    # 웹훅(Vercel hook/api/ig.js)이 깨운 즉시 처리. EVENTS 환경 변수 = [{kind: comment|message, account_id, comment_id?, sender?}]
+    #   comment → 비공개 답장(글 + 빠른 답장 버튼 '가이드 받기') + 공개 답글 / message(버튼 누름 · 아무 답장) → PDF 파일 자체
+    evs = json.loads(os.environ.get('EVENTS', '[]')); done = json.loads(DONE_F.read_text(encoding='utf-8')) if DONE_F.exists() else {}
+    sent = json.loads(FILE_F.read_text(encoding='utf-8')) if FILE_F.exists() else {}
+    by_id = {a['ig_user_id']: n for n, a in CFG['accounts'].items()}
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+    for e in evs:
+        name = by_id.get(str(e.get('account_id'))); acc_dm = DM['accounts'].get(name or '', {})
+        if not name or not acc_dm: continue
+        acc = CFG['accounts'][name]; tok = os.environ.get(acc['token_secret'])
+        on = [m for m in acc_dm['media'] if m.get('on', True)]
+        if not tok or not on: continue
+        if e['kind'] == 'comment':
+            m = next((x for x in on if x['media_id'] == str(e.get('media_id'))), None)
+            if not m or e['comment_id'] in done: continue
+            res = DM['resources'][m['resource']]
+            first = {'text': res.get('first_text', '댓글 고마워요! 아래 버튼을 누르면 가이드 PDF를 바로 보내드려요.'),
+                     'quick_replies': [{'content_type': 'text', 'title': res.get('button', '가이드 받기'), 'payload': 'GET_' + m['resource']}]}
+            try:
+                http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': e['comment_id']}, 'message': first}, tok)
+                done[e['comment_id']] = now; print(f'{name} 댓글 → 첫 DM(버튼) 보냄')
+                reps = DM.get('comment_replies', [])
+                if reps:
+                    k = done.get('_rot', 0); done['_rot'] = k + 1
+                    try: http('POST', f'{API}/{e["comment_id"]}/replies', {'message': reps[k % len(reps)]}, tok)
+                    except RuntimeError as x: print(f'공개 답글 실패: {str(x)[:200]}')
+            except RuntimeError as x: print(f'{name} 첫 DM 실패: {str(x)[:300]}')
+        elif e['kind'] == 'message':
+            res_key = on[0]['resource']; res = DM['resources'][res_key]; key = f'{name}:{e["sender"]}:{res_key}'
+            if key in sent: continue
+            try:
+                http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'attachment': {'type': 'file', 'payload': {'url': res['file_url']}}}}, tok)
+                sent[key] = now; print(f'{name} → PDF 파일 보냄')
+                if res.get('footer'):
+                    try: http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': e['sender']}, 'message': {'text': res['footer']}}, tok)
+                    except RuntimeError: pass
+            except RuntimeError as x: print(f'{name} 파일 실패: {str(x)[:300]}')
+    DONE_F.parent.mkdir(exist_ok=True)
+    DONE_F.write_text(json.dumps(done, ensure_ascii=False, indent=0), encoding='utf-8'); FILE_F.write_text(json.dumps(sent, ensure_ascii=False, indent=0), encoding='utf-8')
+
+
 if __name__ == '__main__':
     m = sys.argv[1] if len(sys.argv) > 1 else 'dry'
+    if m == 'hook': hook(); sys.exit(0)
     if m in ('followup', 'followup_dry'): followup('dry' if m == 'followup_dry' else 'run')
     else: main(m)
