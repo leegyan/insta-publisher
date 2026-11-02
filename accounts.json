@@ -26,6 +26,10 @@
     "cashwood.lab": {
       "ig_user_id": "17841462444541766",
       "token_secret": "IG_TOKEN_CASHWOOD_LAB"
+    },
+    "tes._.ted": {
+      "ig_user_id": "17841424213031511",
+      "token_secret": "IG_TOKEN_TES_TED"
     }
   }
 }
