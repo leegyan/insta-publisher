@@ -88,14 +88,12 @@ def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
 def add_shorts(d, pid, account, at, reel, cap, reel_mp4):
     # 쇼츠 폴더 검사(INSTA shorts_make.py, 26.11.01.): 쇼츠 영상 = 릴스에서 '팔로우' 만 '구독' 으로 바꾼 렌더(끝 화면 · 끝 말).
     #   쇼츠준비.json 의 릴스 · 쇼츠 mp4 · 썸네일 SHA-1 이 지금 파일과 같고 대조(바꾼 줄 전까지 릴스와 같음)가 통과여야 한다.
-    #   썸네일 = 릴스 커버, 캡션 = 릴스 캡션에서 한 줄만 '팔로우' → '구독' 으로 바꾼 글
+    #   썸네일 = 릴스 커버, 캡션 = 릴스 캡션과 같은 글(릴스 · 쇼츠는 끝 화면 팔로우 / 구독으로만 다름, Gyan 26.11.02.)
     s = reel.parent.parent / '쇼츠' / reel.name
     mp4 = sorted(s.glob('*.mp4')) if s.is_dir() else []
     if len(mp4) != 1 or not (s / '캡션.txt').exists() or not (s / '썸네일.jpg').exists() or not (s / '쇼츠준비.json').exists(): sys.exit(f'쇼츠 폴더 {s} 없음 또는 불완전 — INSTA reel_cover.py {reel} (shorts_make.py)')
     sj = json.loads((s / '쇼츠준비.json').read_text(encoding='utf-8')); h = lambda f: hashlib.sha1(f.read_bytes()).hexdigest()
-    lines = cap.splitlines(); scap = (s / '캡션.txt').read_text(encoding='utf-8').strip(); sl = scap.splitlines()
-    dl = [i for i in range(len(lines)) if i < len(sl) and lines[i] != sl[i]]
-    cap_ok = len(sl) == len(lines) and len(dl) == 1 and '팔로우' in lines[dl[0]] and sl[dl[0]] == lines[dl[0]].replace('팔로우', '구독')
+    cap_ok = (s / '캡션.txt').read_text(encoding='utf-8').strip() == cap.strip()
     bad = [n for n, ok in [('릴스 영상', sj.get('릴스_mp4_sha1') == h(reel_mp4)), ('쇼츠 영상', sj.get('쇼츠_mp4_sha1') == h(mp4[0])), ('대조', sj.get('대조', {}).get('결과') == '통과'),
                            ('썸네일', (s / '썸네일.jpg').read_bytes() == (reel / '커버.jpg').read_bytes()), ('캡션', cap_ok)] if not ok]
     if bad: sys.exit(f'쇼츠 폴더가 이 릴스판의 쇼츠 판이 아님({", ".join(bad)}) — INSTA reel_cover.py {reel} 다시')
