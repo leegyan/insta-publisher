@@ -1,4 +1,5 @@
 // Instagram 웹훅 받는 곳(돈나무 연구소 · insta-publisher). 댓글 · DM 이 오면 GitHub 워크플로우 'DM 즉시'를 깨운다
+// 지금 쓰지 않음(2026-11-02 Cloudflare Workers 판 hook/worker.js 로 운영). 참고용으로 남김
 // 토큰 · 비밀값은 여기 적지 않는다 — Vercel 환경 변수: VERIFY_TOKEN(웹훅 확인 문자열) · APP_SECRET(Meta 앱 시크릿, 서명 확인) · GH_DISPATCH_TOKEN(GitHub 토큰, actions 쓰기)
 const crypto = require('crypto');
 

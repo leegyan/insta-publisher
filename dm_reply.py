@@ -138,7 +138,7 @@ def followup(mode):
 
 
 def hook():
-    # 웹훅(Vercel hook/api/ig.js)이 깨운 즉시 처리. EVENTS 환경 변수 = [{kind: comment|message, account_id, comment_id?, sender?}]
+    # 웹훅(Cloudflare Worker cashwood-hook = hook/worker.js)이 깨운 즉시 처리. EVENTS 환경 변수 = [{kind: comment|message, account_id, comment_id?, sender?}]
     #   comment → 비공개 답장(글 + 빠른 답장 버튼 '가이드 받기') + 공개 답글 / message(버튼 누름 · 아무 답장) → PDF 파일 자체
     evs = json.loads(os.environ.get('EVENTS', '[]')); done = json.loads(DONE_F.read_text(encoding='utf-8')) if DONE_F.exists() else {}
     sent = json.loads(FILE_F.read_text(encoding='utf-8')) if FILE_F.exists() else {}
