@@ -113,6 +113,8 @@ def followup(mode):
         print(f'{name}: 대화 {len(convs)}개')
         for c in convs:
             msgs = c.get('messages', {}).get('data', [])
+            parts = [x for x in c.get('participants', {}).get('data', []) if x.get('id') != acc['ig_user_id']]
+            print('  상대 participants id 와 메시지 from id 같음:', [p.get('id') for p in parts] == list({m['from']['id'] for m in msgs if m.get('from', {}).get('id') != acc['ig_user_id']}), '· participants 수', len(c.get('participants', {}).get('data', [])))
             print('  최근 메시지:', ' / '.join(f"{'상대' if m.get('from', {}).get('id') != acc['ig_user_id'] else '우리'} {m.get('created_time', '')[11:16]}" for m in msgs))
             theirs = [m for m in msgs if m.get('from', {}).get('id') != acc['ig_user_id'] and m.get('from', {}).get('username') != name]
             if not theirs: continue
