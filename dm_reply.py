@@ -68,13 +68,21 @@ def main(mode):
                 if mode == 'dry':
                     print(f'[보낼 예정] {name} ← 댓글 {cid} @{who.get("username")}'); continue
                 try:
-                    http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': cid}, 'message': {'text': text}}, tok)
+                    # 1순위: PDF 파일 자체를 DM 에 첨부(링크가 아니라 파일 — Gyan 26.11.02 11:01 "그 파일만 다운받을 수 있게").
+                    #   Meta 가 res['file_url'] 에서 파일을 받아 붙인다(pdf 25MB 이하, 2025-12-19 지원). 비공개 답장은 한 통뿐이라 안내문은 PDF 마지막 쪽에 있다
+                    # 첨부가 거부되면(지원 안 됨 · 오류) 글 + 링크로 보낸다
+                    sent_kind = 'file'
+                    try:
+                        http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': cid}, 'message': {'attachment': {'type': 'file', 'payload': {'url': res['file_url']}}}}, tok)
+                    except RuntimeError as e:
+                        print(f'{name} 댓글 {cid} 파일 첨부 실패 → 글로 보냄: {str(e)[:200]}'); sent_kind = 'text'
+                        http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': cid}, 'message': {'text': text}}, tok)
                     if replies:   # 공개 답글(실패해도 DM 은 보낸 것으로 기록)
                         k = done.get('_rot', 0); done['_rot'] = k + 1
                         try: http('POST', f'{API}/{cid}/replies', {'message': replies[k % len(replies)]}, tok)
                         except RuntimeError as e: print(f'{name} 댓글 {cid} 공개 답글 실패: {e}')
                     done[cid] = now.isoformat(timespec='seconds'); sent += 1
-                    logs.append({'at': datetime.datetime.now(KST).isoformat(timespec='seconds'), 'account': name, 'media': media['media_id'], 'comment': cid, 'resource': media['resource']})
+                    logs.append({'at': datetime.datetime.now(KST).isoformat(timespec='seconds'), 'account': name, 'media': media['media_id'], 'comment': cid, 'resource': media['resource'], 'kind': sent_kind})
                 except RuntimeError as e:
                     print(f'{name} 댓글 {cid} 실패: {e}')
                     if 'already' in str(e): done[cid] = 'already'          # 이미 한 번 보낸 댓글

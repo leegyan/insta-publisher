@@ -4,7 +4,8 @@
   "pension_guide": {
    "link": "https://raw.githubusercontent.com/leegyan/insta-publisher/main/dm/cashwood_pension_guide.pdf",
    "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
-   "message": "약속한 연금저축펀드 세팅 가이드예요.\n{link}"
+   "message": "약속한 연금저축펀드 세팅 가이드예요.\n{link}",
+   "file_url": "https://raw.githubusercontent.com/leegyan/insta-publisher/main/dm/cashwood_pension_guide.pdf"
   }
  },
  "accounts": {
