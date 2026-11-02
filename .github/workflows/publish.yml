@@ -37,4 +37,4 @@ jobs:
         run: |
           git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
           git add 기록/게시기록.jsonl 2>/dev/null || true
-          git diff --cached --quiet || (git commit -m "게시 기록" && git push)
+          git diff --cached --quiet || (git commit -m "게시 기록" && for i in 1 2 3 4 5; do git pull --rebase -q && git push && break; sleep 3; done)   # 다른 워크플로우(DM · 성적표 · 토큰 점검)가 같은 때 main 에 올리면 push 가 거절되어 게시 기록이 사라지던 결함(26.11.02. tes._.ted 릴스 기록 누락)
