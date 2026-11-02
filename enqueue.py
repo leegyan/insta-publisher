@@ -97,7 +97,7 @@ def add_shorts(d, pid, account, at, reel, cap, reel_mp4):
     bad = [n for n, ok in [('릴스 영상', sj.get('릴스_mp4_sha1') == h(reel_mp4)), ('쇼츠 영상', sj.get('쇼츠_mp4_sha1') == h(mp4[0])), ('대조', sj.get('대조', {}).get('결과') == '통과'),
                            ('썸네일', (s / '썸네일.jpg').read_bytes() == (reel / '커버.jpg').read_bytes()), ('캡션', cap_ok)] if not ok]
     if bad: sys.exit(f'쇼츠 폴더가 이 릴스판의 쇼츠 판이 아님({", ".join(bad)}) — INSTA reel_cover.py {reel} 다시')
-    shutil.copy(mp4[0], d / 'reel.mp4'); shutil.copy(s / '썸네일.jpg', d / 'cover.jpg')
+    shutil.copy(mp4[0], d / 'reel.mp4'); shutil.copy(s / '썸네일.jpg', d / 'cover.jpg'); scap = (s / '캡션.txt').read_text(encoding='utf-8').strip()   # 쇼츠 캡션(= 릴스 캡션, 위에서 같은지 확인)
     meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': scap, 'type': 'youtube', 'video': 'reel.mp4', 'cover': 'cover.jpg'}
     (d / 'post.json').write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding='utf-8')
 
