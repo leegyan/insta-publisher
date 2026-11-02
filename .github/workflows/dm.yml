@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'dry = 보내지 않고 대상만 찍기 / run = 보내기'
+        description: 'dry · run = 댓글 DM / followup · followup_dry = 답장한 사람에게 PDF 파일'
         default: dry
   # schedule:
   #   - cron: '7,37 * * * *'   # 30분마다(GitHub 예약은 몇 분 늦을 수 있음)
@@ -24,5 +24,5 @@ jobs:
       - name: 기록 저장
         run: |
           git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
-          git add 기록/dm_보낸댓글.json 기록/dm기록.jsonl 2>/dev/null || true
+          git add 기록/dm_보낸댓글.json 기록/dm기록.jsonl 기록/dm_파일보냄.json 2>/dev/null || true
           git diff --cached --quiet || (git commit -m 'DM 기록' && git push)

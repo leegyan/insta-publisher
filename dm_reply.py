@@ -94,5 +94,43 @@ def main(mode):
     print(f'보냄 {sent}통')
 
 
+FILE_F = ROOT / '기록' / 'dm_파일보냄.json'
+
+
+def followup(mode):
+    # 2단계: 댓글 DM 을 받은 사람이 답장(버튼 · 아무 글)을 보내면 24시간 대화 창이 열린다 → 그 사람에게 PDF 파일 자체를 보낸다
+    # 지금은 DM 목록을 읽어 찾는다(웹훅 서버가 생기면 그쪽이 같은 일을 즉시 한다). 같은 사람에게는 자료마다 한 번만
+    sent = json.loads(FILE_F.read_text(encoding='utf-8')) if FILE_F.exists() else {}
+    now = datetime.datetime.now(datetime.timezone.utc); n = 0
+    for name, acc_dm in DM['accounts'].items():
+        acc = CFG['accounts'][name]; tok = os.environ.get(acc['token_secret'])
+        if not tok: continue
+        res_key = next((m['resource'] for m in acc_dm['media'] if m.get('on', True)), None)
+        if not res_key: continue
+        res = DM['resources'][res_key]
+        url = f'{API}/me/conversations?' + urllib.parse.urlencode({'platform': 'instagram', 'fields': 'participants,messages.limit(5){from,created_time}', 'limit': 25})
+        convs = http('GET', url, token=tok).get('data', [])
+        print(f'{name}: 대화 {len(convs)}개')
+        for c in convs:
+            msgs = c.get('messages', {}).get('data', [])
+            theirs = [m for m in msgs if m.get('from', {}).get('id') != acc['ig_user_id'] and m.get('from', {}).get('username') != name]
+            if not theirs: continue
+            last = theirs[0]; uid = last['from']['id']
+            age = now - datetime.datetime.fromisoformat(last['created_time'].replace('+0000', '+00:00'))
+            key = f'{name}:{uid}:{res_key}'
+            if key in sent or age.total_seconds() > 23.5 * 3600: continue
+            if mode == 'dry': print(f'[파일 보낼 예정] {name} → 대화 상대 1명'); continue
+            try:
+                http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': uid}, 'message': {'attachment': {'type': 'file', 'payload': {'url': res['file_url']}}}}, tok)
+                sent[key] = now.isoformat(timespec='seconds'); n += 1
+            except RuntimeError as e:
+                print(f'{name} 파일 보내기 실패: {str(e)[:300]}')
+    if mode != 'dry':
+        FILE_F.parent.mkdir(exist_ok=True); FILE_F.write_text(json.dumps(sent, ensure_ascii=False, indent=0), encoding='utf-8')
+    print(f'파일 보냄 {n}통')
+
+
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else 'dry')
+    m = sys.argv[1] if len(sys.argv) > 1 else 'dry'
+    if m in ('followup', 'followup_dry'): followup('dry' if m == 'followup_dry' else 'run')
+    else: main(m)
