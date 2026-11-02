@@ -38,6 +38,18 @@ jobs:
                   r = json.loads(urllib.request.urlopen(req, timeout=30).read())
                   same = '일치' if str(r.get('user_id')) == acc.get('ig_user_id') else f'불일치(accounts.json {acc.get("ig_user_id")})'
                   lines.append(f'{name}: 정상 username={r.get("username")} user_id={r.get("user_id")} ig_user_id {same}')
+                  # 권한 시험(읽기만): DM 목록(manage_messages) · 최근 게시물 댓글(manage_comments). 실패 문구만 적고 토큰은 적지 않는다
+                  def probe(url):
+                      q = urllib.request.Request(api + url); q.add_header('Authorization', 'Bearer ' + tok)
+                      try: urllib.request.urlopen(q, timeout=30).read(); return '가능'
+                      except urllib.error.HTTPError as e: return f'불가 HTTP {e.code} {e.read().decode(errors="replace")[:160]}'
+                  lines.append(f'  {name} DM 목록 읽기(manage_messages): ' + probe('/me/conversations?platform=instagram&limit=1'))
+                  try:
+                      q = urllib.request.Request(api + '/me/media?fields=id&limit=1'); q.add_header('Authorization', 'Bearer ' + tok)
+                      md = json.loads(urllib.request.urlopen(q, timeout=30).read()).get('data', [])
+                      lines.append(f'  {name} 댓글 읽기(manage_comments): ' + (probe(f'/{md[0]["id"]}/comments?limit=1') if md else '게시물 없음 — 시험 못 함'))
+                  except urllib.error.HTTPError as e:
+                      lines.append(f'  {name} 게시물 목록 실패 HTTP {e.code}')
               except urllib.error.HTTPError as e:
                   lines.append(f'{name}: 실패 HTTP {e.code} {e.read().decode(errors="replace")[:300]}')
           gh = sec.get('GH_ADMIN_TOKEN')
