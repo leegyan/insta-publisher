@@ -126,6 +126,10 @@ def followup(mode):
                 sent[key] = now.isoformat(timespec='seconds'); n += 1
             except RuntimeError as e:
                 print(f'{name} 파일 보내기 실패: {str(e)[:300]}')
+                # 원인 가르기: 같은 상대에게 짧은 글은 가는지(가면 첨부 문제, 안 가면 대화 창 · 받는 사람 ID 문제)
+                try:
+                    http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'id': uid}, 'message': {'text': '가이드 파일을 보내드릴게요.'}}, tok); print('  글은 감 → 첨부 문제')
+                except RuntimeError as e2: print(f'  글도 실패 → 대화 창 · ID 문제: {str(e2)[:200]}')
     if mode != 'dry':
         FILE_F.parent.mkdir(exist_ok=True); FILE_F.write_text(json.dumps(sent, ensure_ascii=False, indent=0), encoding='utf-8')
     print(f'파일 보냄 {n}통')
