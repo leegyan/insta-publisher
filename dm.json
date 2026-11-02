@@ -2,10 +2,10 @@
  "about": "댓글 → DM 자료 자동 보내기 설정(dm_reply.py). 릴스를 올린 뒤 그 게시물 media_id 를 media 에 넣고 on 을 true 로. 자료는 모든 분께 같은 내용(개별 상담 금지). PDF 는 이 저장소 dm/ 폴더(공개), 파일 이름은 영문 · 댓글에는 comment_replies 5개를 돌려 가며 공개 답글로 단다(Gyan 26.11.02 09:22)",
  "resources": {
   "pension_guide": {
-   "link": "https://raw.githubusercontent.com/leegyan/insta-publisher/main/dm/cashwood_pension_guide.pdf",
+   "link": "https://cdn.jsdelivr.net/gh/leegyan/insta-publisher@main/dm/cashwood_pension_guide.pdf",
    "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
    "message": "약속한 연금저축펀드 세팅 가이드예요.\n{link}",
-   "file_url": "https://raw.githubusercontent.com/leegyan/insta-publisher/main/dm/cashwood_pension_guide.pdf"
+   "file_url": "https://cdn.jsdelivr.net/gh/leegyan/insta-publisher@main/dm/cashwood_pension_guide.pdf"
   }
  },
  "accounts": {
