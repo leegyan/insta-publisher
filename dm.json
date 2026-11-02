@@ -11,9 +11,10 @@
   "cashwood.lab": {
    "media": [
     {
-     "media_id": "여기에_릴스_media_id",
+     "media_id": "18109428059194087",
      "resource": "pension_guide",
-     "on": false
+     "on": true,
+     "note": "월343 릴스 6판(26.11.02 10:36 게시)"
     }
    ]
   }
