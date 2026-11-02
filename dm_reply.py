@@ -1,5 +1,5 @@
 # 댓글 → DM 자료 자동 보내기 (Instagram API with Instagram Login, 공식 '비공개 답장' private reply)
-# 사용:
+# 사용(DM 을 보낸 댓글에는 '공개 답글'도 단다: dm.json comment_replies 5개를 돌려 씀):
 #   python3 dm_reply.py run        → dm.json 에 적은 게시물마다 새 댓글을 읽고, 아직 답하지 않은 댓글 작성자에게 DM 한 통(글 + 자료 링크)을 보낸다
 #   python3 dm_reply.py dry        → 보내지 않고 누구에게 보낼지만 찍는다(권한 · 설정 점검용)
 # 규칙(인스타 공식 문서 · 2026-11-02 확인):
@@ -51,9 +51,9 @@ def main(mode):
         for media in acc_dm['media']:
             if not media.get('on', True): continue
             res = DM['resources'][media['resource']]
-            # 문구 돌려 쓰기: messages 목록(10개)을 보낸 순서대로 하나씩 돌린다 — 같은 글을 계속 보내면 스팸처럼 보여서(Gyan 26.11.02 08:57)
-            # 모든 문구 끝에 footer(모든 분께 같은 자료 · 개인 상담 안 함)를 붙인다
-            msgs = res.get('messages') or [res['message']]
+            # DM 글은 하나(자료 링크 + footer). 댓글에는 짧은 공개 답글 comment_replies(5개)를 보낸 순서대로 돌려 단다(Gyan 26.11.02 09:22)
+            text = res['message'].replace('{link}', res['link']) + ('\n\n' + res['footer'] if res.get('footer') else '')
+            replies = DM.get('comment_replies', [])
             for c in comments(media['media_id'], tok):
                 cid = c['id']; who = c.get('from', {})
                 if cid in done or cid == '_rot' or who.get('username') == name: continue   # 이미 보냄 · 내 댓글
@@ -61,10 +61,12 @@ def main(mode):
                 if age.days >= 7: done[cid] = 'expired'; continue          # 7일 지나면 비공개 답장 불가
                 if mode == 'dry':
                     print(f'[보낼 예정] {name} ← 댓글 {cid} @{who.get("username")}'); continue
-                k = done.get('_rot', 0); done['_rot'] = k + 1
-                text = msgs[k % len(msgs)].replace('{link}', res['link']) + ('\n\n' + res['footer'] if res.get('footer') else '')
                 try:
                     http('POST', f'{API}/{acc["ig_user_id"]}/messages', {'recipient': {'comment_id': cid}, 'message': {'text': text}}, tok)
+                    if replies:   # 공개 답글(실패해도 DM 은 보낸 것으로 기록)
+                        k = done.get('_rot', 0); done['_rot'] = k + 1
+                        try: http('POST', f'{API}/{cid}/replies', {'message': replies[k % len(replies)]}, tok)
+                        except RuntimeError as e: print(f'{name} 댓글 {cid} 공개 답글 실패: {e}')
                     done[cid] = now.isoformat(timespec='seconds'); sent += 1
                     logs.append({'at': datetime.datetime.now(KST).isoformat(timespec='seconds'), 'account': name, 'media': media['media_id'], 'comment': cid, 'resource': media['resource']})
                 except RuntimeError as e:
