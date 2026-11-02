@@ -206,9 +206,25 @@ def subscribe(mode):
         print(name, '현재 구독', json.dumps(r, ensure_ascii=False))
 
 
+def conv_check():
+    """대기 목록 사람과의 대화가 계정 쪽에 있는지 조회(사용자명은 찍지 않음)."""
+    wait = json.loads(WAIT_F.read_text(encoding='utf-8')) if WAIT_F.exists() else {}
+    for k in wait:
+        name, sid = k.split(':', 1); acc = CFG['accounts'][name]; tok = os.environ.get(acc['token_secret'])
+        url = f'{API}/me/conversations?' + urllib.parse.urlencode({'platform': 'instagram', 'user_id': sid, 'fields': 'updated_time,messages.limit(5){created_time,from{id},message,attachments}'})
+        try: r = http('GET', url, token=tok)
+        except RuntimeError as x: print(sid[-4:], '조회 실패', str(x)[:300]); continue
+        convs = r.get('data', []); print(f'…{sid[-4:]} 대화 {len(convs)}개')
+        for c in convs:
+            for m in c.get('messages', {}).get('data', []):
+                who = '계정' if m.get('from', {}).get('id') != sid else '상대'
+                print('  ', m.get('created_time'), who, (m.get('message') or '')[:25], '첨부' if m.get('attachments') else '')
+
+
 if __name__ == '__main__':
     m = sys.argv[1] if len(sys.argv) > 1 else 'dry'
     if m == 'hook': hook(); sys.exit(0)
     if m in ('subscribe', 'sub_check'): subscribe(m); sys.exit(0)
+    if m == 'conv_check': conv_check(); sys.exit(0)
     if m in ('followup', 'followup_dry'): followup('dry' if m == 'followup_dry' else 'run')
     else: main(m)

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'dry · run = 댓글 DM / followup · followup_dry = 답장한 사람에게 PDF 파일 / subscribe · sub_check = 웹훅 구독'
+        description: 'dry · run = 댓글 DM / followup · followup_dry = 답장한 사람에게 PDF 파일 / subscribe · sub_check = 웹훅 구독 / conv_check = 대기자 대화 조회'
         default: dry
   # schedule:
   #   - cron: '7,37 * * * *'   # 30분마다(GitHub 예약은 몇 분 늦을 수 있음)
