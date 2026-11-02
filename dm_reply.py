@@ -54,7 +54,13 @@ def main(mode):
             # DM 글은 하나(자료 링크 + footer). 댓글에는 짧은 공개 답글 comment_replies(5개)를 보낸 순서대로 돌려 단다(Gyan 26.11.02 09:22)
             text = res['message'].replace('{link}', res['link']) + ('\n\n' + res['footer'] if res.get('footer') else '')
             replies = DM.get('comment_replies', [])
-            for c in comments(media['media_id'], tok):
+            # 점검용: 게시물의 댓글 수(comments_count)와 API 가 돌려준 댓글 수를 찍는다(사용자 이름은 찍지 않음 — 공개 저장소 로그)
+            try:
+                cc = http('GET', f'{API}/{media["media_id"]}?fields=comments_count', token=tok).get('comments_count')
+            except RuntimeError as e: cc = f'읽기 실패 {e}'
+            got = list(comments(media['media_id'], tok))
+            print(f'{name} {media["media_id"]}: 댓글 수 {cc} · API 가 돌려준 댓글 {len(got)}개')
+            for c in got:
                 cid = c['id']; who = c.get('from', {})
                 if cid in done or cid == '_rot' or who.get('username') == name: continue   # 이미 보냄 · 내 댓글
                 age = now - datetime.datetime.fromisoformat(c['timestamp'].replace('+0000', '+00:00'))
