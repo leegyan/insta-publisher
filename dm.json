@@ -6,6 +6,12 @@
    "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
    "message": "약속한 연금저축펀드 세팅 가이드예요.\n{link}",
    "file_url": "https://cdn.jsdelivr.net/gh/leegyan/insta-publisher@main/dm/cashwood_pension_guide.pdf"
+  },
+  "irp_guide": {
+   "file_url": "https://cdn.jsdelivr.net/gh/leegyan/insta-publisher@main/dm/cashwood_irp_guide.pdf",
+   "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
+   "first_text": "댓글 고마워요! 아래 버튼을 누르면 IRP 세팅 가이드 PDF를 바로 보내드려요.",
+   "button": "가이드 받기"
   }
  },
  "accounts": {
@@ -16,6 +22,12 @@
      "resource": "pension_guide",
      "on": true,
      "note": "월343 릴스 6판(26.11.02 10:36 게시)"
+    },
+    {
+     "media_id": "18128886682846097",
+     "resource": "irp_guide",
+     "on": true,
+     "note": "IRP 연말300 릴스 5판(26.11.03 11:35 게시)"
     }
    ]
   }
