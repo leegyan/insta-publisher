@@ -12,6 +12,12 @@
    "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
    "first_text": "댓글 고마워요! 아래 버튼을 누르면 IRP 세팅 가이드 PDF를 바로 보내드려요.",
    "button": "가이드 받기"
+  },
+  "chungyak_guide": {
+   "file_url": "https://cdn.jsdelivr.net/gh/leegyan/insta-publisher@main/dm/cashwood_chungyak_guide.pdf",
+   "footer": "모든 분께 같은 자료를 보내드려요. 개인별 투자 상담은 하지 않아요.",
+   "first_text": "댓글 고마워요! 아래 버튼을 누르면 청약통장 소득공제 가이드 PDF를 바로 보내드려요.",
+   "button": "가이드 받기"
   }
  },
  "accounts": {
