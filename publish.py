@@ -111,6 +111,19 @@ def yt_thumbnail(vid, path, tok):
         print(msg); log({'post_id': 'thumbnail_' + vid, 'warning': msg, 'at': datetime.datetime.now(KST).isoformat(timespec='seconds')})
 
 
+def yt_thumb(account, vid, path):
+    # 게시 뒤 쇼츠 썸네일만 다시 넣기(전화 인증 전에 올라가 403 으로 빠진 편). 워크플로우 'YouTube 썸네일' 이 thumb 가지의 <vid>.jpg 를 넘긴다. 실패하면 작업을 실패로 끝낸다
+    yt = CFG['accounts'][account].get('youtube')
+    if not yt: raise RuntimeError(f'accounts.json {account} youtube 설정 없음')
+    tok = yt_access(yt); data = pathlib.Path(path).read_bytes()
+    req = urllib.request.Request(f'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={vid}', data=data, method='POST')
+    req.add_header('Authorization', 'Bearer ' + tok); req.add_header('Content-Type', 'image/jpeg')
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r: print('썸네일 설정', vid, r.read()[:200].decode(errors='replace'))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f'썸네일 실패 {vid} HTTP {e.code}: {e.read().decode(errors="replace")[:500]}')
+
+
 def publish_post(pdir, sha, gap=30):
     meta = json.loads((pdir / 'post.json').read_text(encoding='utf-8'))
     acc = CFG['accounts'][meta['account']]
@@ -228,4 +241,4 @@ def refresh():
 
 
 if __name__ == '__main__':
-    {'run': run, 'refresh': refresh, 'yt_url': yt_url, 'yt_auth': yt_auth, 'yt_auth_event': yt_auth_event}[sys.argv[1]](*sys.argv[2:])
+    {'run': run, 'refresh': refresh, 'yt_url': yt_url, 'yt_auth': yt_auth, 'yt_auth_event': yt_auth_event, 'yt_thumb': yt_thumb}[sys.argv[1]](*sys.argv[2:])

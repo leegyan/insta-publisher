@@ -1,0 +1,30 @@
+name: YouTube 썸네일
+# 이미 올라간 쇼츠에 맞춤 썸네일만 다시 넣는다(채널 전화 인증 전에 게시돼 403 으로 빠진 편).
+# 커버는 부모 없는 thumb 가지에 <영상ID>.jpg 로 덮어써 올린다(이미지 이력이 쌓이지 않게, queue 가지와 같은 방식).
+on:
+  workflow_dispatch:
+    inputs:
+      account:
+        description: accounts.json 계정 이름
+        default: don.in.numbers
+      vid:
+        description: 유튜브 영상 ID(쉼표로 여러 개)
+        required: true
+permissions:
+  contents: read
+jobs:
+  thumb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: thumb 가지 받기
+        run: git clone --depth 1 --branch thumb "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" _thumb
+      - name: 썸네일 넣기
+        env:
+          YT_DON_IN_NUMBERS_CLIENT_SECRET: ${{ secrets.YT_DON_IN_NUMBERS_CLIENT_SECRET }}
+          YT_DON_IN_NUMBERS_REFRESH: ${{ secrets.YT_DON_IN_NUMBERS_REFRESH }}
+          YT_HYOGWA_CHECK_REFRESH: ${{ secrets.YT_HYOGWA_CHECK_REFRESH }}
+        run: |
+          for v in $(echo "${{ inputs.vid }}" | tr ',' ' '); do
+            python3 publish.py yt_thumb "${{ inputs.account }}" "$v" "_thumb/$v.jpg"
+          done
