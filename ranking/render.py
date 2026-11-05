@@ -59,8 +59,8 @@ def build(D):
     rowH = min(104, 740 // left); boxH = rowH - 16; top0 = 870
     rows = []
     for i, it in enumerate(rest):
-        name, val = (it, '') if isinstance(it, str) else (it[0], it[1])   # 항목: "이름" 또는 ["이름", "값"]
-        rank = i + 2; col = 0 if i < left else 1; row = i if i < left else i - left
+        name, val = (it, '') if isinstance(it, str) else (it[0], it[1])   # 항목: "이름" 또는 ["이름", "값"] 또는 ["이름", "값", 공동순위]
+        rank = it[2] if isinstance(it, list) and len(it) > 2 else i + 2; col = 0 if i < left else 1; row = i if i < left else i - left
         x = [80, 550][col]; y = top0 + row * rowH
         rc = C['silver'] if rank == 2 else C['bronze'] if rank == 3 else C['sub']
         rows.append(f'<div class="box" style="left:{x}px;top:{y}px;height:{boxH}px"></div>'
