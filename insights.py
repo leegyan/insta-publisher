@@ -8,6 +8,9 @@
 # 암호화: 실행마다 새 AES-256-GCM 키로 내용을 잠그고, 그 키를 insights_pub.pem(RSA-OAEP SHA-256 공개키)으로 잠근다.
 #   여는 개인키는 저장소에 없다(Gyan PC INSTA/공용/tools/insights_key.pem). 공개 저장소에는 잠긴 파일만 남는다
 # 로그(공개)에는 지표 수치를 찍지 않는다. 지표 이름별로 읽힘 · 실패와 HTTP 오류 번호만 찍는다
+# 예외(Gyan 2026-11-05 결정): PLAIN_VIEWS 계정은 릴스별 조회수(views)만 암호화하지 않고 기록/성적표/<계정>_조회.json 에 쓴다.
+#   몇위야 아침 제작 세션(클라우드, 개인키 없음)이 '잘된 주제 잇기'(ranking/만드는법.md 1절 5)를 판정하는 데 쓴다.
+#   조회수는 인스타 릴스 화면에 공개되는 값이다. 시청 시간 · 건너뛰기율 · 저장 · 공유 · 계정 단위 값은 넣지 않는다
 import json, os, sys, base64, datetime, pathlib, urllib.request, urllib.parse, urllib.error
 
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -22,6 +25,7 @@ REEL_METRICS = ['views', 'reach', 'ig_reels_avg_watch_time', 'ig_reels_video_vie
 # reposts 는 문서에 있으나 Instagram 로그인 토큰에서는 'does not support the metrics: reposts'(2026-10-27 실측)라 뺐다
 REEL_FIELDS = 'id,media_type,media_product_type,timestamp,permalink,like_count,comments_count'
 # Meta 문서(Instagram User Insights): reach · views 모두 follow_type · media_product_type
+PLAIN_VIEWS = ['myeotwi.ya']
 ACCOUNT_QUERIES = [('reach', 'follow_type'), ('reach', 'media_product_type'), ('views', 'follow_type'), ('views', 'media_product_type')]  # follower_type 은 400(2026-10-27 실측)
 
 
@@ -119,6 +123,14 @@ def main():
     (OUT / fn).write_text(json.dumps(encrypt(result)), encoding='utf-8')
     with open(OUT / '목록.txt', 'a', encoding='utf-8') as f: f.write(fn + '\n')
     print('저장', fn)
+    for name in PLAIN_VIEWS:
+        acc = result['accounts'].get(name)
+        if not acc: continue
+        rows = [{'post_id': r['post_id'], 'published_at': r.get('published_at'), 'views': (r.get('metrics') or {}).get('views')}
+                for r in acc['reels']]
+        rows.sort(key=lambda r: r['published_at'] or '', reverse=True)
+        (OUT / f'{name}_조회.json').write_text(json.dumps({'collected_at': result['collected_at'], 'reels': rows}, ensure_ascii=False, indent=1), encoding='utf-8')
+        print('저장', f'{name}_조회.json', f'릴스 {len(rows)}편')
 
 
 if __name__ == '__main__':
