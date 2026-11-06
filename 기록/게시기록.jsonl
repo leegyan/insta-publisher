@@ -168,3 +168,9 @@
 {"post_id": "myeotwi.ya_20261106_TVOTT화제성_스토리", "account": "myeotwi.ya", "media_id": "18144957433614327", "published_at": "2026-11-06T17:02:24+09:00"}
 {"post_id": "tes._.ted_20261102_양파_눈물_스토리", "account": "tes._.ted", "error": "컨테이너 18120151648807102 상태 ERROR: ERROR", "at": "2026-11-06T17:02:55+09:00"}
 {"post_id": "tes._.ted_20261107_소금_얼음녹는이유_스토리", "account": "tes._.ted", "error": "컨테이너 18120151762807102 상태 ERROR: ERROR", "at": "2026-11-06T17:03:25+09:00"}
+{"post_id": "hyogwa.check_20261106_편의점닭가슴살_릴스_5판", "account": "hyogwa.check", "media_id": "18376355458209087", "published_at": "2026-11-06T17:48:37+09:00"}
+{"post_id": "thumbnail_K8VdtJVY9XQ", "warning": "썸네일 실패 K8VdtJVY9XQ HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"The authenticated user doesn't have permissions to upload and set custom video thumbnails.\",\n    \"errors\": [\n      {\n        \"message\": \"The authenticated user doesn't have permissions to upload and set custom video thumbnails.\",\n        \"domain\": \"you", "at": "2026-11-06T17:48:40+09:00"}
+{"post_id": "hyogwa.check_20261106_편의점닭가슴살_쇼츠_5판", "account": "hyogwa.check", "media_id": "K8VdtJVY9XQ", "published_at": "2026-11-06T17:48:40+09:00"}
+{"post_id": "hyogwa.check_20261106_편의점닭가슴살_스토리_5판", "account": "hyogwa.check", "media_id": "18132987334846931", "published_at": "2026-11-06T17:50:15+09:00"}
+{"post_id": "tes._.ted_20261102_양파_눈물_스토리", "account": "tes._.ted", "error": "컨테이너 18120158422807102 상태 ERROR: ERROR", "at": "2026-11-06T17:51:46+09:00"}
+{"post_id": "tes._.ted_20261107_소금_얼음녹는이유_스토리", "account": "tes._.ted", "error": "컨테이너 18120158833807102 상태 ERROR: ERROR", "at": "2026-11-06T17:52:17+09:00"}
