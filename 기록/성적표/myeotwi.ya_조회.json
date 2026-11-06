@@ -1,20 +1,30 @@
 {
- "collected_at": "2026-11-06T09:17:55+09:00",
+ "collected_at": "2026-11-06T16:02:01+09:00",
  "reels": [
+  {
+   "post_id": "myeotwi.ya_20261106_가수브랜드평판10월_릴스",
+   "published_at": "2026-11-06T14:00:50+09:00",
+   "views": 1453
+  },
+  {
+   "post_id": "myeotwi.ya_20261106_우리집소득순위2인_릴스",
+   "published_at": "2026-11-06T11:00:56+09:00",
+   "views": 167
+  },
   {
    "post_id": "myeotwi.ya_20261105_드라마평판10월_릴스",
    "published_at": "2026-11-05T22:01:49+09:00",
-   "views": 1528
+   "views": 1669
   },
   {
    "post_id": "myeotwi.ya_20261105_비드라마출연자화제성_릴스",
    "published_at": "2026-11-05T20:00:46+09:00",
-   "views": 1421
+   "views": 1436
   },
   {
    "post_id": "myeotwi.ya_20261105_좋아하는방송프로_릴스",
    "published_at": "2026-11-05T17:01:50+09:00",
-   "views": 1333
+   "views": 1360
   },
   {
    "post_id": "myeotwi.ya_20261105_갤럽예능방송인_릴스",
@@ -24,7 +34,7 @@
   {
    "post_id": "myeotwi.ya_20261105_예능방송인평판_릴스",
    "published_at": "2026-11-05T11:01:18+09:00",
-   "views": 2859
+   "views": 2875
   },
   {
    "post_id": "myeotwi.ya_20261103_시도별교통사고사망자_릴스",
@@ -34,12 +44,12 @@
   {
    "post_id": "myeotwi.ya_20261103_2025앨범판매순위_릴스",
    "published_at": "2026-11-03T20:00:46+09:00",
-   "views": 2510
+   "views": 2515
   },
   {
    "post_id": "myeotwi.ya_20261103_예능프로그램브랜드평판_릴스",
    "published_at": "2026-11-03T17:00:50+09:00",
-   "views": 6493
+   "views": 6528
   },
   {
    "post_id": "myeotwi.ya_20261103_시도별출산율_릴스",
@@ -74,7 +84,7 @@
   {
    "post_id": "myeotwi.ya_20261102_나이대별대출_릴스",
    "published_at": "2026-11-02T11:00:48+09:00",
-   "views": 122
+   "views": 123
   },
   {
    "post_id": "myeotwi.ya_20261102_우리집소득순위_릴스",
@@ -84,7 +94,7 @@
   {
    "post_id": "myeotwi.ya_20261101_간편식브랜드평판_릴스",
    "published_at": "2026-11-01T22:00:47+09:00",
-   "views": 1070
+   "views": 1071
   },
   {
    "post_id": "myeotwi.ya_20261101_나이대별월소득_릴스",
@@ -104,7 +114,7 @@
   {
    "post_id": "myeotwi.ya_20261101_나이대별순자산상위1_릴스",
    "published_at": "2026-11-01T11:01:19+09:00",
-   "views": 123
+   "views": 124
   },
   {
    "post_id": "myeotwi.ya_20261031_아파트브랜드평판_릴스",
