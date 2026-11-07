@@ -51,8 +51,13 @@ def wait_finished(cid, token, tries=10, gap=30):
 
 
 def published_ids():
-    if not LOG.exists(): return set()
-    return {json.loads(l)['post_id'] for l in LOG.read_text(encoding='utf-8').splitlines() if l.strip() and json.loads(l).get('media_id')}
+    # 내 checkout 의 게시기록 + 지금 원격 main 의 게시기록(앞 실행이 방금 올린 기록까지 보려고, 26.11.07. 같은 편 2번 게시 막기)
+    texts = [LOG.read_text(encoding='utf-8')] if LOG.exists() else []
+    try:
+        subprocess.run(['git', 'fetch', '-q', '--depth', '1', 'origin', 'main'], cwd=ROOT, check=True, capture_output=True, timeout=60)
+        texts.append(subprocess.run(['git', 'show', 'FETCH_HEAD:기록/게시기록.jsonl'], cwd=ROOT, check=True, capture_output=True, text=True).stdout)
+    except Exception as e: print('원격 게시기록 못 읽음:', e)
+    return {json.loads(l)['post_id'] for t in texts for l in t.splitlines() if l.strip() and json.loads(l).get('media_id')}
 
 
 def log(rec):
@@ -163,11 +168,18 @@ def publish_post(pdir, sha, gap=30):
 
 def rebuild_queue(remove, lease):
     # 게시한 발간물을 뺀 나머지로 부모 없는 커밋 1개를 새로 만들어 queue 가지를 덮어씀
-    for r in remove: subprocess.run(['rm', '-rf', r], cwd=QUEUE, check=True)
-    git('checkout', '--orphan', 'tmp_queue'); git('add', '-A')
-    git('-c', 'user.name=insta-publisher', '-c', 'user.email=bot@users.noreply.github.com', 'commit', '--allow-empty', '-m', 'queue ' + datetime.datetime.now(KST).isoformat(timespec='minutes'))
-    # lease: 읽기 시작할 때의 queue 커밋. 그사이 다른 쪽(enqueue)이 queue를 바꿨으면 push가 거절되고 이번 실행은 실패로 끝남 → 다음 실행에서 다시 함
-    git('push', f'--force-with-lease=queue:{lease}', 'origin', 'tmp_queue:queue')
+    # 그사이 다른 쪽(enqueue)이 queue 를 바꿔 push 가 거절되면, 새 queue 를 받아 같은 발간물을 다시 빼고 또 올린다(최대 6번).
+    #   예전에는 거절되면 실패로 끝났고, 게시한 편이 queue 에 남아 다음 실행이 같은 편을 또 올렸다(26.11.07. 몇위야 소득세율구간 릴스 2번 게시)
+    for n in range(6):
+        if n:
+            git('fetch', '--depth', '1', 'origin', 'queue'); git('checkout', '-q', '-B', 'q_retry', 'FETCH_HEAD'); lease = git('rev-parse', 'HEAD')
+        for r in remove: subprocess.run(['rm', '-rf', r], cwd=QUEUE, check=True)
+        git('checkout', '-q', '--orphan', f'tmp_queue{n}'); git('add', '-A')
+        git('-c', 'user.name=insta-publisher', '-c', 'user.email=bot@users.noreply.github.com', 'commit', '-q', '--allow-empty', '-m', 'queue ' + datetime.datetime.now(KST).isoformat(timespec='minutes'))
+        r = subprocess.run(['git', 'push', f'--force-with-lease=queue:{lease}', 'origin', f'tmp_queue{n}:queue'], cwd=QUEUE, capture_output=True, text=True)
+        if r.returncode == 0: return
+        print(f'queue 정리 push 거절({n + 1}번째) — 새 queue 를 받아 다시 함: {r.stderr.strip()[:200]}'); time.sleep(3)
+    raise RuntimeError('queue 정리 6번 실패 — 게시한 편이 queue 에 남음(다음 실행은 게시기록으로 건너뜀)')
 
 
 def run(now=None, gap=30):
