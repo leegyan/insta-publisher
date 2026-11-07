@@ -2,11 +2,13 @@
 # (Figma 무료 플랜은 MCP 호출이 월 20회라 매일 쓸 수 없음). 글꼴은 ranking/fonts/(OFL)
 # 쓰는 법: python3 ranking/render.py <자료.json> <결과.png>   자료 형식: 만드는법.md 2절
 # "image": 자료 JSON 옆 그림 파일(주제 그림, 선택) — 제목 오른쪽 위에 놓인다
-# 세 가지 모양: 순위 목록(기본, items 10~15개, 1위 가림) · 구간표("layout": "tier", rows 5~12개 ["상위 1%", "값"]) · 사다리("layout": "ladder", rows 5~9개 ["이름", "설명", "값 범위"], 위가 가장 높은 순위)
+# 모양: 순위 목록(기본, items 10~15개, 1위 가림) · 추가 8가지(render_more.py: podium · bars · vs · tiers · map · line · gauge · quiz) · 구간표("layout": "tier", rows 5~12개 ["상위 1%", "값"]) · 사다리("layout": "ladder", rows 5~9개 ["이름", "설명", "값 범위"], 위가 가장 높은 순위)
 import sys
 import json, pathlib, html
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from render_more import LAYOUTS as MORE
 
 HERE = pathlib.Path(__file__).resolve().parent
 # 색은 라이트 하나로 고정(2026-10-30 결정)
@@ -198,7 +200,11 @@ def main(src, out):
     D = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
     global SRC_DIR
     SRC_DIR = Path(src).resolve().parent
-    page_html = {'tier': build_tier, 'ladder': build_ladder}.get(D.get('layout'), build)(D)
+    lay = D.get('layout')
+    if lay in MORE:  # 2026-11-07 추가 모양 8가지(render_more.py)
+        page_html = MORE[lay](D, SRC_DIR, HERE / 'fonts')
+    else:
+        page_html = {'tier': build_tier, 'ladder': build_ladder}.get(lay, build)(D)
     tmp = pathlib.Path(out).with_suffix('.html'); tmp.write_text(page_html, encoding='utf-8')
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1080, 'height': 1920})

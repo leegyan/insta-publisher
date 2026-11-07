@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       times:
-        description: 'KST 시각, 빈칸으로 구분(최대 6개)'
-        default: '11:00 14:00 17:00 20:00 22:00'
+        description: 'KST 시각, 빈칸으로 구분(최대 8개)'
+        default: '07:00 09:00 11:00 13:00 15:00 17:00 20:00 22:00'
 permissions:
   actions: write
   contents: read
@@ -15,7 +15,7 @@ concurrency:
   group: slots
   cancel-in-progress: true
 env:
-  TIMES: ${{ inputs.times || '11:00 14:00 17:00 20:00 22:00' }}
+  TIMES: ${{ inputs.times || '07:00 09:00 11:00 13:00 15:00 17:00 20:00 22:00' }}
 jobs:
   s1:
     runs-on: ubuntu-latest
@@ -39,3 +39,5 @@ jobs:
   s4: {needs: s3, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
   s5: {needs: s4, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
   s6: {needs: s5, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s7: {needs: s6, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s8: {needs: s7, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
