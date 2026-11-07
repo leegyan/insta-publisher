@@ -238,3 +238,7 @@
 {"post_id": "hyogwa.check_20261107_공감툰_여4_신입_쇼츠", "account": "hyogwa.check", "media_id": "IrtrBFOIYw8", "published_at": "2026-11-07T14:32:32+09:00"}
 {"post_id": "tes._.ted_20261102_양파_눈물_스토리", "account": "tes._.ted", "error": "컨테이너 18120377359807102 상태 ERROR: ERROR", "at": "2026-11-07T14:33:03+09:00"}
 {"post_id": "tes._.ted_20261107_소금_얼음녹는이유_스토리", "account": "tes._.ted", "error": "컨테이너 18120377440807102 상태 ERROR: ERROR", "at": "2026-11-07T14:33:34+09:00"}
+{"post_id": "hyogwa.check_20261107_공감툰_남3_부업_쇼츠", "account": "hyogwa.check", "media_id": "i9V9S6ABEm0", "published_at": "2026-11-07T14:35:58+09:00", "note": "게시 워크플로우 42343179767 기록 커밋 실패로 실행 로그에서 복구(게시 시각은 실행 종료 무렵)"}
+{"post_id": "hyogwa.check_20261107_공감툰_남4_출근길_쇼츠", "account": "hyogwa.check", "media_id": "3kjxH14VWXQ", "published_at": "2026-11-07T14:35:58+09:00", "note": "게시 워크플로우 42343179767 기록 커밋 실패로 실행 로그에서 복구(게시 시각은 실행 종료 무렵)"}
+{"post_id": "hyogwa.check_20261107_공감툰_남5_월요일연차_쇼츠", "account": "hyogwa.check", "media_id": "X5SC12qplt0", "published_at": "2026-11-07T14:35:58+09:00", "note": "게시 워크플로우 42343179767 기록 커밋 실패로 실행 로그에서 복구(게시 시각은 실행 종료 무렵)"}
+{"post_id": "hyogwa.check_20261107_공감툰_여5_12월연차_쇼츠", "account": "hyogwa.check", "media_id": "GZJ9ZQEIYcg", "published_at": "2026-11-07T14:35:58+09:00", "note": "게시 워크플로우 42343179767 기록 커밋 실패로 실행 로그에서 복구(게시 시각은 실행 종료 무렵)"}
