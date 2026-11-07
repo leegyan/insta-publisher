@@ -57,7 +57,22 @@ def published_ids():
         subprocess.run(['git', 'fetch', '-q', '--depth', '1', 'origin', 'main'], cwd=ROOT, check=True, capture_output=True, timeout=60)
         texts.append(subprocess.run(['git', 'show', 'FETCH_HEAD:기록/게시기록.jsonl'], cwd=ROOT, check=True, capture_output=True, text=True).stdout)
     except Exception as e: print('원격 게시기록 못 읽음:', e)
-    return {json.loads(l)['post_id'] for t in texts for l in t.splitlines() if l.strip() and json.loads(l).get('media_id')}
+    recs = [json.loads(l) for t in texts for l in t.splitlines() if l.strip()]
+    return {r['post_id'] for r in recs if r.get('media_id')}
+
+
+def failed_counts():
+    # 게시물마다 실패 기록 수(내 checkout 기준). 같은 편이 매 실행 실패해 기록 · 실패 알림만 쌓이던 것을 끊으려고(26.11.07. tes._.ted 60초 넘는 스토리 2편)
+    out = {}
+    if LOG.exists():
+        for l in LOG.read_text(encoding='utf-8').splitlines():
+            if l.strip():
+                r = json.loads(l)
+                if r.get('error'): out[r['post_id']] = out.get(r['post_id'], 0) + 1
+    return out
+
+
+GIVE_UP = 3  # 같은 편이 이만큼 실패하면 대기열에서 뺀다(게시기록에 dropped 로 남김)
 
 
 def log(rec):
@@ -185,10 +200,13 @@ def rebuild_queue(remove, lease):
 def run(now=None, gap=30):
     now = now or datetime.datetime.now(KST)
     sha = git('rev-parse', 'HEAD')
-    done = published_ids(); remove = []; errors = []
+    done = published_ids(); fails = failed_counts(); remove = []; errors = []
     for pj in sorted(pathlib.Path(QUEUE).glob('posts/*/*/post.json')):
         pdir = pj.parent; meta = json.loads(pj.read_text(encoding='utf-8')); pid = meta['post_id']
         if pid in done: remove.append(str(pdir.relative_to(QUEUE))); continue  # 이미 게시됨(지난 실행에서 queue 정리 실패)
+        if fails.get(pid, 0) >= GIVE_UP:
+            log({'post_id': pid, 'account': meta.get('account'), 'dropped': f'{fails[pid]}번 실패해 대기열에서 뺌', 'at': datetime.datetime.now(KST).isoformat(timespec='seconds')})
+            remove.append(str(pdir.relative_to(QUEUE))); print('대기열에서 뺌(실패', fails[pid], '번):', pid); continue
         if datetime.datetime.fromisoformat(meta['publish_at']) > now: continue
         try:
             meta, mid = publish_post(pdir, sha, gap=gap)

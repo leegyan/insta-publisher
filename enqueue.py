@@ -73,9 +73,21 @@ def dispatch(url):
     except Exception as e:
         print('게시 워크플로우 실행 실패:', e, f'→ 수동: curl -X POST -H "Content-Type: application/json" {api} -d \'{{"ref":"main"}}\'')
 
+def story_fit(mp4):
+    # Instagram API 스토리 영상은 3~60초(Meta IG User Media 문서 Story Video Specifications). 넘으면 컨테이너가 ERROR 로 끝난다(26.11.07. tes._.ted 73.7초 · 65.3초 스토리 실측)
+    # 스토리는 릴스로 데려가는 안내라서, 넘는 영상은 앞 59초만 남기고 끝 1초를 서서히 줄여 넣는다
+    dur = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(mp4)], check=True, capture_output=True, text=True).stdout)
+    if dur <= 59.5: return
+    tmp = mp4.with_name('cut.mp4')
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(mp4), '-t', '59', '-vf', 'fade=t=out:st=58:d=1', '-af', 'afade=t=out:st=58:d=1',
+                    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', str(tmp)], check=True)
+    tmp.replace(mp4); print(f'스토리 영상 {dur:.1f}초 → 59초로 자름(API 한도 60초)')
+
+
 def add(d, pid, kind, account, at, cap, pngs, vids, reel=None):
     if kind in ('reel', 'story', 'youtube'):
         shutil.copy(vids[0], d / 'reel.mp4'); names = ['reel.mp4']
+        if kind == 'story': story_fit(d / 'reel.mp4')
         meta = {'post_id': pid, 'account': account, 'publish_at': at, 'caption': cap if kind != 'story' else '', 'type': kind, 'video': 'reel.mp4'}
         if kind == 'reel': shutil.copy(reel / '커버.jpg', d / 'cover.jpg'); meta['cover'] = 'cover.jpg'  # 릴스 cover_url
     else:
