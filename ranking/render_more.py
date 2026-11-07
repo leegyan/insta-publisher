@@ -95,15 +95,16 @@ def vs(D, src, fonts):
 def tiers(D, src, fonts):
     # 티어표: 등급 = 순위 구간(S 1~2 · A 3~5 · B 6~9 · C 10~N). 등급 이름을 순위 말고 다른 근거로 나누지 않는다. S 첫 칸(1위) 가림
     it = items_check(D); groups = [('S', 0, 2, C['gold']), ('A', 2, 5, C['accent']), ('B', 5, 9, C['silver']), ('C', 9, len(it), C['bronze'])]
-    out = []; y = 640
-    for gi, (t, a, b, col) in enumerate(groups):
-        names = it[a:b]; rows_n = -(-len(names) // 4); h = [180, 180, 190, 250][gi] if rows_n <= 2 else 250
-        chips = ''.join(f'<span class="chip" style="{"background:" + C["pale"] + ";border:3px dashed " + C["gold"] + ";color:" + C["gold"] if (a + j == 0) else ""}">{"? ? ?" if a + j == 0 else esc(name_of(n))}</span>' for j, n in enumerate(names))
-        out.append(f'<div class="a" style="left:80px;top:{y}px;width:150px;height:{h}px;border-radius:24px 0 0 24px;background:{col};display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff">'
+    # 칸 높이는 브라우저가 칩 줄 수에 맞춰 정한다(최소 180px, 칩은 위아래 · 줄 가운데 맞춤). 예전엔 이름 4개를 한 줄로 어림해
+    # 6개가 한 줄에 들어가도 2줄 높이(250px)로 잡고 칩이 위로 붙었다(Gyan 2026-11-07 지적). 아래 글(1590px)과 겹치면 render.py 가 멈춘다(data-maxbottom)
+    out = []
+    for t, a, b, col in groups:
+        chips = ''.join(f'<span class="chip" style="margin:0;{"background:" + C["pale"] + ";border:3px dashed " + C["gold"] + ";color:" + C["gold"] if (a + j == 0) else ""}">{"? ? ?" if a + j == 0 else esc(name_of(n))}</span>' for j, n in enumerate(it[a:b]))
+        out.append(f'<div style="display:flex;min-height:180px">'
+                   f'<div style="width:150px;flex:none;border-radius:24px 0 0 24px;background:{col};display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff">'
                    f'<div class="bhs" style="font-size:96px;line-height:1">{t}</div><div style="font-weight:700;font-size:24px">{a + 1}~{b}위</div></div>'
-                   f'<div class="a" style="left:230px;top:{y}px;width:770px;height:{h}px;border-radius:0 24px 24px 0;background:#FFFDF8;border:3px solid {col};padding:{max(8, (h - 78 * rows_n) // 2 + 4)}px 0 0 22px;white-space:normal;font-size:0">{chips}</div>')
-        y += h + 26
-    need(y < 1600, f'티어표가 아래 글과 겹침(y={y}) — 이름을 줄일 것')
+                   f'<div style="flex:1;border-radius:0 24px 24px 0;background:#FFFDF8;border:3px solid {col};padding:28px 0 28px 22px;display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:14px 12px;white-space:normal;font-size:0">{chips}</div></div>')
+    out = [f'<div class="a" data-maxbottom="1590" style="left:80px;top:640px;width:920px;display:flex;flex-direction:column;gap:26px;white-space:normal">{"".join(out)}</div>']
     return page(D, ''.join(out), 'S티어 첫 자리는 어디일까요?  정답은 캡션에', src, fonts)
 
 def tile_map(D, src, fonts):

@@ -209,10 +209,10 @@ def main(src, out):
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1080, 'height': 1920})
         pg.goto(tmp.resolve().as_uri()); pg.wait_for_selector('body[data-ready="1"]', timeout=20000)
-        over = pg.evaluate('''() => [...document.querySelectorAll('.a,.name,.rank')].filter(e => { const r=e.getBoundingClientRect(); return r.right>1080||r.bottom>1920; }).length''')
+        over = pg.evaluate('''() => [...document.querySelectorAll('.a,.name,.rank')].filter(e => { const r=e.getBoundingClientRect(); return r.right>1080||r.bottom>1920; }).length + [...document.querySelectorAll('[data-maxbottom]')].filter(e => e.getBoundingClientRect().bottom > +e.dataset.maxbottom).length''')
         pg.screenshot(path=out, full_page=False); b.close()
     tmp.unlink()
-    if over: sys.exit(f'화면 밖으로 나간 글자 {over}개 — 자료 글 길이를 줄일 것')
+    if over: sys.exit(f'화면 밖으로 나가거나 아래 글과 겹친 칸 {over}개 — 자료 글 길이를 줄일 것')
     print('그림', out)
 
 if __name__ == '__main__':
