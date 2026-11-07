@@ -1,5 +1,6 @@
 # render.py 의 추가 모양 8가지(Gyan 2026-11-07 시안 8개 통과). render.py 가 "layout" 값으로 불러 쓴다. 자료 형식: 만드는법.md 2절
 # podium 시상대 · bars 막대그래프 · vs 1위 vs 2위 맞히기 · tiers 티어표 · map 시도 타일 지도 · line 연도 꺾은선 · gauge 온도계 눈금 · quiz 4지선다
+# + dots 100명 도트 · donut 도넛 점유율 · receipt 그때 vs 지금 영수증 · board 점수판 · agebars 나이대 세로 막대 · korea 한국은 몇 위
 import html, math, sys, pathlib
 
 C = dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7461', gold='#F5A300',
@@ -176,3 +177,103 @@ def quiz(D, src, fonts):
     return page(D, ''.join(out), '정답 번호를 댓글로!  정답은 캡션에', src, fonts)
 
 LAYOUTS = {'podium': podium, 'bars': bars, 'vs': vs, 'tiers': tiers, 'map': tile_map, 'line': line, 'gauge': gauge, 'quiz': quiz}
+
+# ---- 추가 6가지(Gyan 2026-11-07 시안 9~14 통과): dots · donut · receipt · board · agebars · korea ----
+def dots(D, src, fonts):
+    # 100명 도트: pct(0~100 정수, 자료의 비율을 반올림) 칸을 금색으로. big = 가릴 글자(기본 "??명"), question = 아래 한 줄
+    pct = D['pct']; need(isinstance(pct, int) and 0 < pct < 100, 'dots pct 는 1~99 정수')
+    out = []
+    for i in range(100):
+        r, c = divmod(i, 10)
+        out.append(f'<div class="a" style="left:{150 + c * 80}px;top:{650 + r * 72}px;width:56px;height:56px;border-radius:28px;background:{C["gold"] if i < pct else "#EADCC8"}"></div>')
+    out.append(f'<div class="a" style="left:80px;top:1395px;width:920px;text-align:center;font-weight:800;font-size:44px">{esc(D.get("lead", "노란 칸이"))} <span class="bhs" style="font-size:64px;color:{C["accent"]}">{esc(D.get("big", "??명"))}</span></div>')
+    out.append(f'<div class="a fit" data-max="920" style="left:80px;top:1480px;width:920px;text-align:center;font-weight:600;font-size:28px;color:{C["sub"]}">{esc(D["question"])}</div>')
+    return page(D, ''.join(out), '정답은 캡션에', src, fonts)
+
+def donut(D, src, fonts):
+    # 도넛 점유율: slices [["이름", 비율 수치, "비율 글자"], …] 큰 것부터 3~7개(합 100 이하, 남는 몫은 "그 밖"으로 그림). 첫 조각(1위) 이름은 가림
+    S = D['slices']; need(3 <= len(S) <= 7, 'donut slices 는 3~7개'); tot = sum(x[1] for x in S); need(tot <= 100.5, f'donut 합 {tot} > 100')
+    need([x[1] for x in S] == sorted([x[1] for x in S], reverse=True), 'donut slices 는 큰 것부터')
+    cols = [C['gold'], C['accent'], '#F2A66E', C['bronze'], C['silver'], '#C9B79F', '#DCC9AE']
+    S = [(x[0], x[1], x[2] if len(x) > 2 else f'{x[1]}%', cols[i]) for i, x in enumerate(S)]
+    if tot < 99.5: S.append(('그 밖', 100 - tot, f'{100 - tot:.0f}%', '#E8DCCB'))
+    cx, cy, R, r = 540, 1030, 330, 190; a0 = -90; segs = []
+    pt = lambda a, rr: (cx + rr * math.cos(math.radians(a)), cy + rr * math.sin(math.radians(a)))
+    for nm, v, vs_, col in S:
+        a1 = a0 + 360 * v / 100; la = 1 if a1 - a0 > 180 else 0
+        (x1, y1), (x2, y2), (x3, y3), (x4, y4) = pt(a0, R), pt(a1, R), pt(a1, r), pt(a0, r)
+        segs.append(f'<path d="M{x1:.0f},{y1:.0f} A{R},{R} 0 {la} 1 {x2:.0f},{y2:.0f} L{x3:.0f},{y3:.0f} A{r},{r} 0 {la} 0 {x4:.0f},{y4:.0f} Z" fill="{col}" stroke="{C["bg"]}" stroke-width="6"/>')
+        if v >= 6:
+            tx, ty = pt((a0 + a1) / 2, (R + r) / 2)
+            segs.append(f'<text x="{tx:.0f}" y="{ty + 14:.0f}" text-anchor="middle" font-family="BHS" font-size="{44 if v > 12 else 30}" fill="#fff">{esc(vs_)}</text>')
+        a0 = a1
+    body = f'<svg class="a" style="left:0;top:0" width="1080" height="1920">{"".join(segs)}</svg>'
+    body += f'<div class="a" style="left:{cx - 150}px;top:{cy - 70}px;width:300px;text-align:center"><div class="bhs" style="font-size:96px;color:{C["gold"]};line-height:1">?</div><div style="font-weight:800;font-size:32px">{esc(D.get("center", "1위"))}</div></div>'
+    leg = ''.join(f'<span style="display:inline-flex;align-items:center;margin:0 18px 12px 0;font-weight:700;font-size:30px"><i style="width:26px;height:26px;border-radius:13px;background:{col};margin-right:10px"></i>{"? ? ?" if i == 0 else esc(nm)}</span>' for i, (nm, v, vs_, col) in enumerate(S))
+    body += f'<div class="a" style="left:80px;top:1400px;width:920px;white-space:normal;text-align:center">{leg}</div>'
+    return page(D, body, '1위는 어디일까요?  정답은 캡션에', src, fonts)
+
+def receipt(D, src, fonts):
+    # 그때 vs 지금 영수증: left · right = {"label": "2017년", "rows": [["시간당", "6,470원"], …]} 1~3줄. right 값은 "?"로 가림(hide_right: false 면 보임)
+    L, Rr = D['left'], D['right']; need(1 <= len(L['rows']) <= 3 and len(L['rows']) == len(Rr['rows']), 'receipt rows 는 양쪽 같은 수 1~3줄')
+    hide = D.get('hide_right', True); out = []
+    for x, side, h in [(80, L, False), (570, Rr, hide)]:
+        out.append(f'<div class="a" style="left:{x}px;top:660px;width:430px;height:640px;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08)"></div>'
+                   f'<div class="a fit" data-max="430" style="left:{x}px;top:700px;width:430px;text-align:center;font-weight:800;font-size:30px;color:{C["sub"]}">{esc(D.get("head", "영수증"))}</div>'
+                   f'<div class="a" style="left:{x + 40}px;top:760px;width:350px;border-top:3px dashed {C["line"]}"></div>'
+                   f'<div class="a bhs fit" data-max="430" style="left:{x}px;top:800px;width:430px;text-align:center;font-size:72px">{esc(side["label"])}</div>')
+        for j, (k, v) in enumerate(side['rows']):
+            y = 930 + j * 90
+            out.append(f'<div class="a" style="left:{x + 40}px;top:{y}px;width:350px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:30px"><span>{esc(k)}</span>'
+                       f'<span class="bhs" style="font-size:{52 if j == 0 else 40}px;color:{C["gold"] if h else C["ink"]}">{"?" if h else esc(v)}</span></div>')
+        out.append(f'<div class="a" style="left:{x + 40}px;top:1220px;width:350px;border-top:3px dashed {C["line"]}"></div>')
+    out.append(f'<div class="a bhs" style="left:490px;top:930px;width:100px;text-align:center;font-size:80px;color:{C["accent"]}">→</div>')
+    out.append(f'<div class="a fit" data-max="920" style="left:80px;top:1360px;width:920px;text-align:center;font-weight:700;font-size:36px">{esc(D["question"])}</div>')
+    return page(D, ''.join(out), '얼마일까요?  정답은 캡션에', src, fonts)
+
+def board(D, src, fonts):
+    # 점수판: cols ["이름 칸 제목", "값1 제목", …(값 칸 1~3개)], rows [["이름", "값1", …], …] 순위대로 6~10개. 1위 이름은 가림. 첫 값 칸이 순위 기준
+    cols = D['cols']; rows = D['rows']; nv = len(cols) - 1
+    need(1 <= nv <= 3, 'board cols 는 이름 + 값 1~3칸'); need(6 <= len(rows) <= 10, 'board rows 는 6~10개'); need(all(len(r) == nv + 1 for r in rows), 'board rows 칸 수가 cols 와 다름')
+    wn = 400 if nv == 1 else 330 if nv == 2 else 270; wv = (820 - wn) // nv; rh = min(80, 860 // len(rows))
+    head = ''.join(f'<span style="width:{wv}px;text-align:right">{esc(c)}</span>' for c in cols[1:])
+    out = [f'<div class="a" style="left:60px;top:640px;width:960px;height:84px;border-radius:20px 20px 0 0;background:{C["ink"]};display:flex;align-items:center;color:#fff;font-weight:800;font-size:28px">'
+           f'<span style="width:110px;text-align:center">순위</span><span style="width:{wn}px">{esc(cols[0])}</span>{head}</div>']
+    for i, r in enumerate(rows):
+        y = 724 + i * rh; first = i == 0
+        vals = ''.join(f'<span class="{"bhs" if j == 0 else ""}" style="width:{wv}px;text-align:right;{"font-size:38px;color:" + C["accent"] if j == 0 else "color:" + C["sub"]}">{esc(v)}</span>' for j, v in enumerate(r[1:]))
+        out.append(f'<div class="a" style="left:60px;top:{y}px;width:960px;height:{rh}px;background:{C["pale"] if first else (C["panel"] if i % 2 else "#FFFBF4")};border-bottom:2px solid {C["line"]};display:flex;align-items:center;font-weight:700;font-size:32px">'
+                   f'<span class="bhs" style="width:110px;text-align:center;font-size:44px;color:{[C["gold"], C["silver"], C["bronze"]][i] if i < 3 else C["sub"]}">{i + 1}</span>'
+                   f'<span class="fit" data-max="{wn}" style="width:{wn}px;overflow:hidden;color:{C["gold"] if first else C["ink"]}">{"? ? ?" if first else esc(r[0])}</span>{vals}</div>')
+    return page(D, ''.join(out), '1위는 어디일까요?  정답은 캡션에', src, fonts)
+
+def agebars(D, src, fonts):
+    # 나이대 세로 막대: bars [["25~29", "290만", 290], …] 나이 순서대로 4~8개. highlight = 강조할 나이대 이름 목록(기본 25~29 · 30~34 · 25~34 가운데 있는 것)
+    #   hide_highlight(기본 true) 면 강조 막대 값 글자를 "?"로 가림. 가장 큰 값 막대는 금색. note = 위쪽 알약 글자
+    B = D['bars']; need(4 <= len(B) <= 8, 'agebars bars 는 4~8개')
+    hl = D.get('highlight') or [b[0] for b in B if b[0] in ('25~29', '30~34', '25~34', '25~29세', '30~34세', '25~34세')]
+    mx = max(b[2] for b in B) * 1.08; n = len(B); gap = 920 // n; w = int(gap * 0.8); base = 1440; H = 640; out = []
+    for i, (k, vs_, v) in enumerate(B):
+        x = 80 + i * gap + (gap - w) // 2; h = int(H * v / mx); me = k in hl; top = v == max(b[2] for b in B)
+        col = C['accent'] if me else C['gold'] if top else '#EADCC8'
+        out.append(f'<div class="a" style="left:{x}px;top:{base - h}px;width:{w}px;height:{h}px;border-radius:18px 18px 0 0;background:{col}"></div>'
+                   f'<div class="a bhs" style="left:{x - 30}px;top:{base - h - 56}px;width:{w + 60}px;text-align:center;font-size:34px;color:{C["accent"] if me else C["ink"]}">{"?" if (me and D.get("hide_highlight", True)) else esc(vs_)}</div>'
+                   f'<div class="a" style="left:{x - 30}px;top:{base + 14}px;width:{w + 60}px;text-align:center;font-weight:800;font-size:26px;line-height:1.2;white-space:normal">{esc(k)}</div>')
+    out.append(f'<div class="a" style="left:80px;top:{base}px;width:920px;height:5px;background:{C["ink"]}"></div>')
+    if D.get('note'): out.append(f'<div class="a" style="left:80px;top:690px;width:920px;text-align:center"><span style="padding:10px 22px;border-radius:30px;background:{C["accent"]};color:#fff;font-weight:800;font-size:28px">{esc(D["note"])}</span></div>')
+    return page(D, ''.join(out), '내 나이대 값은 캡션에! 댓글로 비교해 보세요', src, fonts)
+
+def korea(D, src, fonts):
+    # 한국은 몇 위: rows [["나라", "값 글자"], …] 1위부터 6~10개, 한국은 rows 에 넣지 않음. me_rank(한국 실제 순위)는 rows 수보다 커야 함(목록 자리로 답이 새지 않게)
+    rows = D['rows']; need(6 <= len(rows) <= 10, 'korea rows 는 6~10개'); need(D['me_rank'] > len(rows), 'korea me_rank 가 보여 주는 순위 안에 있음 — rows 를 줄이거나 다른 모양')
+    need(all('한국' not in r[0] for r in rows), 'korea rows 에 한국을 넣지 않음'); out = []
+    for i, (n, v) in enumerate(rows):
+        y = 650 + i * 64
+        out.append(f'<div class="a" style="left:120px;top:{y}px;width:840px;height:54px;border-radius:14px;background:{C["panel"]};border:2px solid {C["line"]};display:flex;align-items:center;padding:0 24px;font-weight:700;font-size:30px">'
+                   f'<b class="bhs" style="width:70px;color:{C["sub"]}">{i + 1}</b><span style="flex:1;display:flex"><span class="fit" data-max="560">{esc(n)}</span></span><span class="bhs" style="font-size:34px;color:{C["accent"]}">{esc(v)}</span></div>')
+    out.append(f'<div class="a" style="left:120px;top:1300px;width:840px;height:170px;border-radius:28px;background:{C["pale"]};border:4px dashed {C["gold"]};display:flex;align-items:center;justify-content:space-between;padding:0 50px">'
+               f'<span style="font-weight:800;font-size:48px">{esc(D.get("me", "한국"))}</span><span class="bhs" style="font-size:96px;color:{C["gold"]}">?위</span></div>')
+    out.append(f'<div class="a fit" data-max="920" style="left:80px;top:1500px;width:920px;text-align:center;font-weight:700;font-size:34px">{esc(D["question"])}</div>')
+    return page(D, ''.join(out), '예상 순위를 댓글로!  정답은 캡션에', src, fonts)
+
+LAYOUTS.update({'dots': dots, 'donut': donut, 'receipt': receipt, 'board': board, 'agebars': agebars, 'korea': korea})
