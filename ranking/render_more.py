@@ -1,7 +1,7 @@
 # render.py 의 추가 모양 8가지(Gyan 2026-11-07 시안 8개 통과). render.py 가 "layout" 값으로 불러 쓴다. 자료 형식: 만드는법.md 2절
 # podium 시상대 · bars 막대그래프 · vs 1위 vs 2위 맞히기 · tiers 티어표 · map 시도 타일 지도 · line 연도 꺾은선 · gauge 온도계 눈금 · quiz 4지선다
 # + dots 100명 도트 · donut 도넛 점유율 · receipt 그때 vs 지금 영수증 · board 점수판 · agebars 나이대 세로 막대 · korea 한국은 몇 위
-import html, math, sys, pathlib
+import re, html, math, sys, pathlib
 
 C = dict(bg='#FFF7EB', panel='#FFFFFF', line='#F0E2CC', ink='#211A14', sub='#8A7461', gold='#F5A300',
          silver='#8E979F', bronze='#C8702E', accent='#FF6A13', pale='#FFF3D6')
@@ -102,7 +102,7 @@ def tiers(D, src, fonts):
         chips = ''.join(f'<span class="chip" style="margin:0;{"background:" + C["pale"] + ";border:3px dashed " + C["gold"] + ";color:" + C["gold"] if (a + j == 0) else ""}">{"? ? ?" if a + j == 0 else esc(name_of(n))}</span>' for j, n in enumerate(it[a:b]))
         out.append(f'<div style="display:flex;min-height:180px">'
                    f'<div style="width:150px;flex:none;border-radius:24px 0 0 24px;background:{col};display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff">'
-                   f'<div class="bhs" style="font-size:96px;line-height:1">{t}</div><div style="font-weight:700;font-size:24px">{a + 1}~{b}위</div></div>'
+                   f'<div class="bhs" style="font-size:96px;line-height:1">{t}</div><div style="font-weight:700;font-size:24px">{f'{a + 1}~{b}위' if b - a > 1 else f'{b}위'}</div></div>'
                    f'<div style="flex:1;border-radius:0 24px 24px 0;background:#FFFDF8;border:3px solid {col};padding:28px 0 28px 22px;display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:14px 12px;white-space:normal;font-size:0">{chips}</div></div>')
     out = [f'<div class="a" data-maxbottom="1590" style="left:80px;top:640px;width:920px;display:flex;flex-direction:column;gap:26px;white-space:normal">{"".join(out)}</div>']
     return page(D, ''.join(out), 'S티어 첫 자리는 어디일까요?  정답은 캡션에', src, fonts)
@@ -164,6 +164,9 @@ def quiz(D, src, fonts):
     need(len(ch) == 4 and first in ch, 'quiz choices 는 4개이고 1위 이름이 들어 있어야 함')
     need(not set(ch) & set(shown), f'quiz choices 에 2~5위 이름이 있으면 안 됨: {set(ch) & set(shown)}')
     need(all(c in [name_of(x) for x in it] for c in ch), 'quiz choices 는 items 안의 이름만(자료에 없는 보기를 지어내지 않음)')
+    # 화면에 보이는 순위는 1~5위뿐이다(2~5위 + 1위 보기). 제목에 TOP15 처럼 items 수를 쓰면 화면과 맞지 않는다(Gyan 2026-11-08 지적, 11/8 보이그룹 편)
+    tops = re.findall(r'TOP\s*(\d+)', f"{D['title']} {D.get('title2', '')}")
+    need(all(t == '5' for t in tops), f'quiz 는 1~5위만 보이므로 제목에 TOP{tops[0] if tops else ""} 대신 TOP5 를 쓰거나 TOP 을 빼야 함')
     g = C['gold']; out = []
     for i, n in enumerate(shown):
         x = 80 + (i % 2) * 470; y = 640 + (i // 2) * 84
