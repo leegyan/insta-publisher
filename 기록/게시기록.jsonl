@@ -261,3 +261,6 @@
 {"post_id": "myeotwi.ya_20261108_BMI단계_스토리", "account": "myeotwi.ya", "media_id": "17956574319297218", "published_at": "2026-11-08T07:02:21+09:00"}
 {"post_id": "myeotwi.ya_20261108_보이그룹평판11월_릴스", "account": "myeotwi.ya", "media_id": "18008106608794441", "published_at": "2026-11-08T09:00:51+09:00"}
 {"post_id": "myeotwi.ya_20261108_보이그룹평판11월_스토리", "account": "myeotwi.ya", "media_id": "18438258847177166", "published_at": "2026-11-08T09:01:28+09:00"}
+{"post_id": "hyogwa.check_20261108_공감툰_여6_5분만_릴스", "account": "hyogwa.check", "media_id": "18142513492620998", "published_at": "2026-11-08T10:30:53+09:00"}
+{"post_id": "hyogwa.check_20261108_공감툰_여6_5분만_쇼츠", "account": "hyogwa.check", "error": "유튜브 업로드 → HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"The user has exceeded the number of videos they may upload.\",\n    \"errors\": [\n      {\n        \"message\": \"The user has exceeded the number of videos they may upload.\",\n        \"domain\": \"youtube.video\",\n        \"reason\": \"uploadLimitExceeded\"\n      }\n    ]\n  }\n}\n", "at": "2026-11-08T10:30:54+09:00"}
+{"post_id": "hyogwa.check_20261108_공감툰_여6_5분만_스토리", "account": "hyogwa.check", "media_id": "18122801701968329", "published_at": "2026-11-08T10:32:30+09:00"}
