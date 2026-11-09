@@ -1,13 +1,14 @@
 name: 시각별 게시 실행
 # 하루에 한 번 실행해 두면, 정해 둔 시각(KST)마다 '인스타그램 게시'(publish.yml)를 실행한다.
 # 대기열에 미래 시각으로 넣어 둔 게시물이 그 시각에 올라가게 하는 용도(예약 작업을 시각마다 따로 만들지 않기 위함, Gyan 26.10.31.)
+# 2026-11-09: 공감툰(hyogwa.check) 07:30 · 11:30 · 17:30 게시를 위해 시각 칸을 12개로 늘림(Gyan 지시).
 # 한 작업(job)은 최대 6시간이라 시각마다 작업을 하나씩 두고 앞 작업이 끝나면 다음 작업이 기다린다. 지난 시각은 기다리지 않고 바로 실행한다
 on:
   workflow_dispatch:
     inputs:
       times:
-        description: 'KST 시각, 빈칸으로 구분(최대 8개)'
-        default: '07:00 09:00 11:00 13:00 15:00 17:00 20:00 22:00'
+        description: 'KST 시각, 빈칸으로 구분, 이른 시각부터(최대 12개)'
+        default: '07:00 07:30 09:00 11:00 11:30 13:00 15:00 17:00 17:30 20:00 22:00'
 permissions:
   actions: write
   contents: read
@@ -15,7 +16,7 @@ concurrency:
   group: slots
   cancel-in-progress: true
 env:
-  TIMES: ${{ inputs.times || '07:00 09:00 11:00 13:00 15:00 17:00 20:00 22:00' }}
+  TIMES: ${{ inputs.times || '07:00 07:30 09:00 11:00 11:30 13:00 15:00 17:00 17:30 20:00 22:00' }}
 jobs:
   s1:
     runs-on: ubuntu-latest
@@ -41,3 +42,7 @@ jobs:
   s6: {needs: s5, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
   s7: {needs: s6, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
   s8: {needs: s7, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s9: {needs: s8, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s10: {needs: s9, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s11: {needs: s10, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
+  s12: {needs: s11, if: always(), runs-on: ubuntu-latest, timeout-minutes: 355, steps: *wait_then_publish}
