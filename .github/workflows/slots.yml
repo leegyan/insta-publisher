@@ -16,6 +16,8 @@ concurrency:
   group: slots
   cancel-in-progress: true
 env:
+  # 공감툰(hyogwa.check) 게시 시각. 넘겨받은 목록에 늘 합친다(2026-11-09 Gyan 지시 — 매일 07:30 · 11:30 · 17:30)
+  EXTRA_TIMES: '07:30 11:30 17:30'
   TIMES: ${{ inputs.times || '07:00 07:30 09:00 11:00 11:30 13:00 15:00 17:00 17:30 20:00 22:00' }}
 jobs:
   s1:
@@ -27,7 +29,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           N: ${{ github.job }}
         run: |
-          i=${N#s}; read -ra T <<< "$TIMES"; t=${T[$((i-1))]:-}
+          i=${N#s}; read -ra T <<< "$(printf '%s\n' $TIMES $EXTRA_TIMES | sort -u | tr '\n' ' ')"; t=${T[$((i-1))]:-}
           if [ -z "$t" ]; then echo "$i 번째 시각 없음"; exit 0; fi
           target=$(TZ=Asia/Seoul date -d "today $t" +%s); now=$(date +%s); w=$((target - now))
           if [ $w -gt 21000 ]; then echo "기다림이 5시간 50분을 넘음($w 초) — 시각 간격을 줄여야 함"; exit 1; fi
