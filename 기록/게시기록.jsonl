@@ -309,3 +309,5 @@
 {"post_id": "thumbnail_q4nu792hjDA", "warning": "썸네일 실패 q4nu792hjDA HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"The thumbnail can't be set for the specified video. The request might not be properly authorized.\",\n    \"errors\": [\n      {\n        \"message\": \"The thumbnail can't be set for the specified video. The request might not be properly authorized.\",\n        ", "at": "2026-11-09T16:39:50+09:00"}
 {"post_id": "don.in.numbers_20261111_치킨_닭값_쇼츠", "account": "don.in.numbers", "media_id": "q4nu792hjDA", "published_at": "2026-11-09T16:39:50+09:00"}
 {"post_id": "don.in.numbers_20261111_치킨_닭값_스토리", "account": "don.in.numbers", "media_id": "17966984163230920", "published_at": "2026-11-09T16:40:26+09:00"}
+{"post_id": "myeotwi.ya_20261109_갤럽올해의가수2025_릴스", "account": "myeotwi.ya", "media_id": "18203902759378677", "published_at": "2026-11-09T17:00:50+09:00"}
+{"post_id": "myeotwi.ya_20261109_갤럽올해의가수2025_스토리", "account": "myeotwi.ya", "media_id": "17960150022268199", "published_at": "2026-11-09T17:01:27+09:00"}
