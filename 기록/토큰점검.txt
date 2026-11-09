@@ -1,4 +1,4 @@
-점검 시각 2026-11-09T19:16:31+09:00
+점검 시각 2026-11-09T19:18:50+09:00
 don.in.numbers: 정상 username=don.in.numbers user_id=17841425349888997 ig_user_id 일치
   don.in.numbers DM 목록 읽기(manage_messages): 가능
   don.in.numbers 댓글 읽기(manage_comments): 가능
