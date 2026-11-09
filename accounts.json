@@ -20,7 +20,8 @@
       "youtube": {
         "client_id": "20682840961-2v2gm46gl3umtnvi3olfq6etvh9tdnep.apps.googleusercontent.com",
         "secret_prefix": "YT_HYOGWA_CHECK",
-        "client_secret_prefix": "YT_DON_IN_NUMBERS"
+        "client_secret_prefix": "YT_DON_IN_NUMBERS",
+        "category_id": "23"
       }
     },
     "cashwood.lab": {

@@ -100,7 +100,8 @@ def publish_youtube(pdir, meta, yt):
     # 쇼츠: 세로 영상 3분 이하는 유튜브가 쇼츠로 분류한다. 제목 = 캡션 1줄(100자), 설명 = 캡션 전체(< > 는 유튜브가 받지 않아 뺌)
     tok = yt_access(yt)
     cap = meta['caption'].replace('<', '').replace('>', '')
-    body = {'snippet': {'title': cap.splitlines()[0][:100], 'description': cap[:4900], 'categoryId': '27', 'defaultLanguage': 'ko'},
+    # 카테고리: accounts.json youtube.category_id(없으면 27 교육). 출근하는 사람들 = 23 코미디(Gyan 26.11.08)
+    body = {'snippet': {'title': cap.splitlines()[0][:100], 'description': cap[:4900], 'categoryId': str(yt.get('category_id', '27')), 'defaultLanguage': 'ko'},
             'status': {'privacyStatus': 'public', 'selfDeclaredMadeForKids': False}}
     data = (pdir / meta['video']).read_bytes()
     if HTTP:
@@ -169,6 +170,7 @@ def publish_post(pdir, sha, gap=30):
         cid = http('POST', f'{API}/{ig}/media', body, token)['id']
         wait_finished(cid, token, tries=20, gap=gap)
         mid = http('POST', f'{API}/{ig}/media_publish', {'creation_id': cid}, token)['id']
+        first_comment(mid, meta, token)
         return meta, mid
     kids = []
     for img in meta['images']:  # 장 순서 = images 순서
@@ -179,6 +181,19 @@ def publish_post(pdir, sha, gap=30):
     wait_finished(car, token, gap=gap)
     mid = http('POST', f'{API}/{ig}/media_publish', {'creation_id': car}, token)['id']
     return meta, mid
+
+
+def first_comment(mid, meta, token):
+    # post.json first_comment 가 있으면 게시 직후 계정 이름으로 첫 댓글을 단다(Gyan 26.11.09 댓글 놀이터 시험).
+    # 고정(핀)은 API 에 없어 앱에서 손으로 한다. 댓글이 실패해도 게시는 성공으로 둔다(게시기록에 comment_error 로 남김)
+    text = meta.get('first_comment')
+    if not text: return
+    try:
+        r = http('POST', f'{API}/{mid}/comments', {'message': text}, token)
+        print('첫 댓글', mid, r.get('id'))
+    except Exception as e:
+        print('첫 댓글 실패(게시는 됨):', e)
+        log({'post_id': meta.get('post_id'), 'account': meta.get('account'), 'media_id': mid, 'comment_error': str(e)[:300], 'at': datetime.datetime.now(KST).isoformat(timespec='seconds')})
 
 
 def rebuild_queue(remove, lease):
