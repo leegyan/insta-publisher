@@ -305,3 +305,7 @@
 {"post_id": "myeotwi.ya_20261109_시도별중위연령_스토리", "account": "myeotwi.ya", "media_id": "18138859933730876", "published_at": "2026-11-09T13:01:55+09:00"}
 {"post_id": "myeotwi.ya_20261109_트로트가수평판10월_릴스", "account": "myeotwi.ya", "media_id": "18121863980069397", "published_at": "2026-11-09T15:00:50+09:00"}
 {"post_id": "myeotwi.ya_20261109_트로트가수평판10월_스토리", "account": "myeotwi.ya", "media_id": "18171526753466974", "published_at": "2026-11-09T15:01:25+09:00"}
+{"post_id": "don.in.numbers_20261111_치킨_닭값_릴스", "account": "don.in.numbers", "media_id": "18147175948514863", "published_at": "2026-11-09T16:39:48+09:00"}
+{"post_id": "thumbnail_q4nu792hjDA", "warning": "썸네일 실패 q4nu792hjDA HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"The thumbnail can't be set for the specified video. The request might not be properly authorized.\",\n    \"errors\": [\n      {\n        \"message\": \"The thumbnail can't be set for the specified video. The request might not be properly authorized.\",\n        ", "at": "2026-11-09T16:39:50+09:00"}
+{"post_id": "don.in.numbers_20261111_치킨_닭값_쇼츠", "account": "don.in.numbers", "media_id": "q4nu792hjDA", "published_at": "2026-11-09T16:39:50+09:00"}
+{"post_id": "don.in.numbers_20261111_치킨_닭값_스토리", "account": "don.in.numbers", "media_id": "17966984163230920", "published_at": "2026-11-09T16:40:26+09:00"}
