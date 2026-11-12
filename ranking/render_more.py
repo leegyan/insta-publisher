@@ -66,11 +66,12 @@ def bars(D, src, fonts):
     rows = D['rows']; need(6 <= len(rows) <= 10, f'bars rows 는 6~10개: {len(rows)}')
     vals = [r[2] for r in rows]; need(vals == sorted(vals, reverse=True), 'bars rows 는 큰 값부터')
     top = 660; rh = min(92, 920 // len(rows)); mx = vals[0]; out = []
-    for i, (k, vs, v) in enumerate(rows):
+    for i, row in enumerate(rows):
+        k, vs, v = row[:3]; rk = row[3] if len(row) > 3 else i + 1  # 넷째 칸 = 공동 순위 숫자(선택)
         y = top + i * rh; w = max(16, int(560 * v / mx)); first = i == 0
         col = C['gold'] if first else C['accent'] if i < 3 else '#F2C9A8'
         rc = C['gold'] if first else C['silver'] if i == 1 else C['bronze'] if i == 2 else C['sub']
-        out.append(f'<div class="a bhs" style="left:70px;top:{y}px;width:70px;height:72px;display:flex;align-items:center;justify-content:center;font-size:48px;color:{rc}">{i + 1}</div>'
+        out.append(f'<div class="a bhs" style="left:70px;top:{y}px;width:70px;height:72px;display:flex;align-items:center;justify-content:center;font-size:48px;color:{rc}">{rk}</div>'
                    f'<div class="a fit" data-max="200" style="left:150px;top:{y}px;width:200px;height:72px;display:flex;align-items:center;font-weight:800;font-size:34px;color:{C["gold"] if first else C["ink"]}">{esc(D.get("hide1", "? ? ?") if first else k)}</div>'
                    f'<div class="a" style="left:360px;top:{y + 10}px;width:{w}px;height:52px;border-radius:0 26px 26px 0;background:{col}"></div>'
                    f'<div class="a bhs" style="left:{370 + w}px;top:{y}px;height:72px;display:flex;align-items:center;font-size:38px">{esc(vs)}</div>')
@@ -243,11 +244,14 @@ def board(D, src, fonts):
     head = ''.join(f'<span style="width:{wv}px;text-align:right">{esc(c)}</span>' for c in cols[1:])
     out = [f'<div class="a" style="left:60px;top:640px;width:960px;height:84px;border-radius:20px 20px 0 0;background:{C["ink"]};display:flex;align-items:center;color:#fff;font-weight:800;font-size:28px">'
            f'<span style="width:110px;text-align:center">순위</span><span style="width:{wn}px">{esc(cols[0])}</span>{head}</div>']
+    ranks = D.get('ranks') or list(range(1, len(rows) + 1))  # 공동 순위가 있으면 ranks 로 순위 숫자를 준다(선택)
+    need(len(ranks) == len(rows), 'board ranks 수가 rows 와 다름')
     for i, r in enumerate(rows):
         y = 724 + i * rh; first = i == 0
-        vals = ''.join(f'<span class="{"bhs" if j == 0 else ""}" style="width:{wv}px;text-align:right;{"font-size:38px;color:" + C["accent"] if j == 0 else "color:" + C["sub"]}">{esc(v)}</span>' for j, v in enumerate(r[1:]))
+        hv = first and D.get('hide1_vals')  # 1위 값 칸까지 가림(값으로 답이 새는 자료, 예: 노래 · 가수)
+        vals = ''.join(f'<span class="{"bhs" if j == 0 else ""}" style="width:{wv}px;text-align:right;{"font-size:38px;color:" + C["accent"] if j == 0 else "color:" + C["sub"]}">{"?" if hv else esc(v)}</span>' for j, v in enumerate(r[1:]))
         out.append(f'<div class="a" style="left:60px;top:{y}px;width:960px;height:{rh}px;background:{C["pale"] if first else (C["panel"] if i % 2 else "#FFFBF4")};border-bottom:2px solid {C["line"]};display:flex;align-items:center;font-weight:700;font-size:32px">'
-                   f'<span class="bhs" style="width:110px;text-align:center;font-size:44px;color:{[C["gold"], C["silver"], C["bronze"]][i] if i < 3 else C["sub"]}">{i + 1}</span>'
+                   f'<span class="bhs" style="width:110px;text-align:center;font-size:44px;color:{[C["gold"], C["silver"], C["bronze"]][i] if i < 3 else C["sub"]}">{ranks[i]}</span>'
                    f'<span class="fit" data-max="{wn}" style="width:{wn}px;overflow:hidden;color:{C["gold"] if first else C["ink"]}">{"? ? ?" if first else esc(r[0])}</span>{vals}</div>')
     return page(D, ''.join(out), '1위는 어디일까요?  정답은 캡션에', src, fonts)
 
