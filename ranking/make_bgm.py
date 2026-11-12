@@ -1,89 +1,100 @@
-# 랭킹 릴스 배경음(자체 제작, 저작권 문제 없음)을 만든다: python3 ranking/make_bgm.py → ranking/bgm/*.m4a (각 8초)
-# 01_경쾌(120 BPM 화음 뜯기) · 02_웅장(84 BPM 큰북 · 금관 느낌 화음) · 03_긴장(110 BPM 반복 저음 · 올라가는 소리) · 04_통통(128 BPM 마림바 느낌)
-import numpy as np, subprocess, wave, pathlib, sys
-SR = 44100; L = SR * 8
+# 랭킹 릴스 배경음(자체 제작)을 만든다: python3 ranking/make_bgm.py → ranking/bgm/*.m4a (각 8초)
+# 2026-11-12 2판: 1판(numpy 사인파 · 톱니파 합성)이 기계음 같다는 평에 따라, 실제 악기 녹음 샘플(FluidR3_GM 사운드폰트, MIT 라이선스)로
+# MIDI 를 연주해 만든다. 박자 · 세기를 조금씩 흔들어(사람이 친 것처럼) 기계 느낌을 줄였다.
+# 필요: fluidsynth, fluid-soundfont-gm(apt), pretty_midi(pip). 없으면: apt-get install -y fluidsynth fluid-soundfont-gm && pip install pretty_midi
+# 01_경쾌(116 BPM 피아노 · 어쿠스틱 베이스 · 플루트 · 가벼운 드럼) · 02_웅장(84 BPM 현악 합주 · 호른 · 팀파니 · 합창)
+# 03_긴장(110 BPM 피치카토 반복 · 낮은 현 · 타이코) · 04_통통(128 BPM 마림바 · 우쿨렐레 느낌 나일론 기타 · 박수 · 셰이커)
+import pathlib, random, subprocess, tempfile
+import pretty_midi as pm
+
 OUT = pathlib.Path(__file__).resolve().parent / 'bgm'
-def note(m): return 440 * 2 ** ((m - 69) / 12)
-def env(n, a=0.005, d=0.25): x = np.arange(n) / SR; return np.minimum(1, x / a) * np.exp(-x / d)
-def mk(): return np.zeros(L)
-def add(out, sig, st):
-    s = int(st * SR); e = min(L, s + len(sig))
-    if s < L: out[s:e] += sig[:e - s]
-def noise(n, seed): return np.random.default_rng(seed).standard_normal(n)
-def kick(out, st, amp=0.9):
-    k = np.arange(int(0.35 * SR)) / SR; add(out, amp * np.sin(2 * np.pi * (50 + 90 * np.exp(-k * 30)) * k) * np.exp(-k * 8), st)
-def snare(out, st, seed, amp=0.35): n = int(0.2 * SR); add(out, amp * noise(n, seed) * env(n, 0.001, 0.06), st)
-def hat(out, st, seed, amp=0.08): n = int(0.05 * SR); add(out, amp * noise(n, seed) * env(n, 0.001, 0.015), st)
-def tom(out, st, f=70, amp=1.0, d=0.5):
-    n = int(1.0 * SR); x = np.arange(n) / SR
-    add(out, amp * (np.sin(2 * np.pi * f * (1 + 0.6 * np.exp(-x * 12)) * x) * np.exp(-x / d) + 0.25 * noise(n, int(f * 7 + st * 10)) * np.exp(-x * 25)), st)
-def saw(f, n, harm=12):
-    x = np.arange(n) / SR; return sum(np.sin(2 * np.pi * f * k * x) / k for k in range(1, harm + 1)) * (2 / np.pi)
-def finish(out, name):
-    out = out / np.max(np.abs(out)) * 0.8; fade = int(0.6 * SR); out[-fade:] *= np.linspace(1, 0, fade)
-    w = OUT / ('_' + name + '.wav')
-    with wave.open(str(w), 'wb') as f: f.setnchannels(1); f.setsampwidth(2); f.setframerate(SR); f.writeframes((out * 32767).astype(np.int16).tobytes())
-    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', str(w), '-ac', '2', '-c:a', 'aac', '-b:a', '160k', str(OUT / (name + '.m4a'))], check=True); w.unlink()
+SF2 = '/usr/share/sounds/sf2/FluidR3_GM.sf2'
+LEN = 8.0
+DRUM = dict(kick=36, snare=38, clap=39, hat=42, ohat=46, crash=49, ride=51, shaker=70, tamb=54, wood=76, cym=57)
+
+class Song:
+    def __init__(self, bpm, seed):
+        self.m = pm.PrettyMIDI(initial_tempo=bpm); self.b = 60 / bpm; self.r = random.Random(seed); self.ins = {}
+    def inst(self, key, prog, drum=False):
+        if key not in self.ins:
+            i = pm.Instrument(program=prog, is_drum=drum, name=key); self.m.instruments.append(i); self.ins[key] = i
+        return self.ins[key]
+    def n(self, key, prog, pitch, beat, dur, vel, drum=False, swing=0.012, vj=8):
+        i = self.inst(key, prog, drum); s = beat * self.b + self.r.uniform(-swing, swing); s = max(0, s)
+        e = s + dur * self.b; v = max(1, min(127, int(vel + self.r.randint(-vj, vj))))
+        if s < LEN: i.notes.append(pm.Note(velocity=v, pitch=pitch, start=s, end=min(e, LEN + 1)))
+    def d(self, name, beat, vel, swing=0.008): self.n('drum', 0, DRUM[name], beat, 0.25, vel, drum=True, swing=swing)
+    def beats(self): return int(LEN / self.b) + 1
+
+def chord_tones(root, minor=False): return [root, root + (3 if minor else 4), root + 7]
+
+def t01():  # 경쾌 3판(11/12): 통기타 · 글로켄슈필이 기계음 같다는 평 → 피아노 반주 + 어쿠스틱 베이스 + 플루트 멜로디 + 가벼운 드럼(사이드 스틱 · 셰이커)
+    s = Song(116, 11); prog = [(48, False), (43, False), (45, True), (41, False)]
+    for bar in range(4):
+        root, mi = prog[bar]; st = bar * 4; t = chord_tones(root + 24, mi)
+        s.n('pianoL', 0, root, st, 1.8, 70, swing=0.02, vj=10); s.n('pianoL', 0, root + 7, st + 2, 1.8, 62, swing=0.02, vj=10)
+        for bt in (0.5, 1.5, 2.5, 3.5):
+            for j, p in enumerate(t): s.n('pianoR', 0, p, st + bt + j * 0.012, 0.45, 60, swing=0.018, vj=12)
+        for bt, off in ((0, 0), (1, 7), (2, 12), (3, 7)): s.n('bass', 32, root - 12 + off, st + bt, 0.9, 84, swing=0.015, vj=10)
+    for b in range(16):
+        if b % 2 == 0: s.d('kick', b, 70, swing=0.012)
+        else: s.n('drum', 0, 37, b, 0.25, 64, drum=True, swing=0.012, vj=10)
+        for h in (0, .5): s.d('shaker', b + h, 40 if h else 52, swing=0.015)
+    mel = [(72, 0, 1.5), (76, 1.5, .5), (79, 2, 2), (74, 4, 1.5), (77, 5.5, .5), (79, 6, 2), (81, 8, 1.5), (79, 9.5, .5), (76, 10, 2), (77, 12, 1), (76, 13, 1), (74, 14, .5), (72, 14.5, 1.5)]
+    for p, bt, du in mel: s.n('flute', 73, p, bt, du * 0.95, 76, swing=0.02, vj=10)
+    return s
+
+def t02():  # 웅장: Am F C G, 현악 합주 + 호른 + 합창 + 팀파니
+    s = Song(84, 2); prog = [(45, True), (41, False), (48, False), (43, False)]; bar_beats = 3
+    for bar in range(4):
+        root, mi = prog[bar]; st = bar * bar_beats; tones = chord_tones(root, mi)
+        for p in tones + [root + 12]: s.n('strings', 48, p + 12, st, bar_beats, 82, swing=0.004)
+        s.n('lowstr', 48, root - 12, st, bar_beats, 90, swing=0.004)
+        for p in chord_tones(root + 12, mi): s.n('choir', 52, p + 12, st, bar_beats, 62, swing=0.004)
+        for p in tones[:2]: s.n('horn', 60, p + 12, st + 1, bar_beats - 1, 86)
+        s.n('timp', 47, root, st, 1, 112); s.n('timp', 47, root, st + 2, 0.5, 86); s.n('timp', 47, root, st + 2.5, 0.5, 96)
+    s.d('crash', 0, 96); s.d('cym', 9, 100)
+    for k in range(6): s.n('timp', 47, 43, 10.2 + k * 0.12, 0.12, 70 + k * 8, swing=0.003)
+    return s
+
+def t03():  # 긴장: Dm 반복, 피치카토 8분음 반복 + 낮은 현 지속음 + 타이코 + 째깍
+    s = Song(110, 3); bars = [(50, [62, 65, 69, 65]), (50, [62, 65, 70, 65]), (46, [62, 65, 70, 74]), (45, [61, 64, 69, 73])]
+    for bar, (root, arp) in enumerate(bars):
+        st = bar * 4
+        for k in range(8): s.n('pizz', 45, arp[k % 4], st + k * 0.5, 0.4, 88 if k % 2 == 0 else 70)
+        s.n('cello', 42, root - 12, st, 4, 84, swing=0.003); s.n('cello', 42, root, st, 4, 66, swing=0.003)
+        s.n('taiko', 116, 41, st, 1, 110); s.n('taiko', 116, 41, st + 2.5, 0.5, 92); s.n('taiko', 116, 41, st + 3, 1, 100)
+    for b in range(15): s.d('wood', b, 50 if b % 2 else 64, swing=0.004)
+    for k, p in enumerate(range(62, 75)): s.n('rise', 49, p, 10 + k * 0.4, 0.5, 60 + k * 4, swing=0.002)
+    s.d('cym', 14.6, 104)
+    return s
+
+def t04():  # 통통: C Am F G, 마림바 멜로디 + 나일론 기타 + 베이스 + 박수 · 셰이커
+    s = Song(128, 4); prog = [(48, False), (45, True), (41, False), (43, False)]
+    for bar in range(4):
+        root, mi = prog[bar]; st = bar * 4; t = chord_tones(root + 12, mi)
+        for k in range(8): s.n('nylon', 24, t[[0, 2, 1, 2][k % 4]] + 12, st + k * 0.5, 0.45, 72 if k % 2 == 0 else 58)
+        for bt in (0, 1.5, 2.5, 3): s.n('bass', 32, root, st + bt, 0.4, 88)
+    for b in range(17):
+        if b % 2 == 0: s.d('kick', b, 90)
+        if b % 2: s.d('clap', b, 80)
+        for h in (0, .25, .5, .75): s.d('shaker', b + h, 46 if h else 58, swing=0.006)
+    mel = [72, 76, 79, 76, 81, 79, 76, 74, 72, 74, 76, 79, 77, 76, 74, 72]
+    for k, p in enumerate(mel):
+        s.n('marimba', 12, p, k, 0.5, 86); s.n('marimba', 12, p + (0 if k % 4 else 12), k + 0.5, 0.4, 62)
+    return s
+
+def render(song, name):
+    with tempfile.TemporaryDirectory() as tmp:
+        mid = pathlib.Path(tmp) / 'a.mid'; wav = pathlib.Path(tmp) / 'a.wav'; song.m.write(str(mid))
+        subprocess.run(['fluidsynth', '-ni', '-g', '0.8', '-r', '44100', '-R', '1', '-C', '1', '-F', str(wav), SF2, str(mid)],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        af = f'atrim=0:{LEN},afade=t=in:d=0.05,afade=t=out:st={LEN - 0.7}:d=0.7,loudnorm=I=-16:TP=-1.5:LRA=11'
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', str(wav), '-af', af, '-ar', '44100', '-ac', '2', '-c:a', 'aac', '-b:a', '160k',
+                        str(OUT / (name + '.m4a'))], check=True)
     print(name + '.m4a')
 
-def t01():  # 경쾌: 120 BPM, C G Am F
-    out = mk(); beat = 0.5
-    for b in range(16):
-        st = b * beat; kick(out, st)
-        if b % 2: snare(out, st, b)
-        for h in (0, .5): hat(out, st + h * beat, 100 + b * 2 + int(h * 2))
-    for bar, (bass, ch) in enumerate([(48, [60, 64, 67]), (43, [59, 62, 67]), (45, [60, 64, 69]), (41, [60, 65, 69])]):
-        for b in range(4):
-            st = (bar * 4 + b) * beat; n = int(beat * SR); x = np.arange(n) / SR
-            add(out, 0.175 * np.sign(np.sin(2 * np.pi * note(bass) * x)) * env(n, .005, .18), st)
-            for j, m in enumerate(ch):
-                for h in (0, .5):
-                    nn = int(.3 * SR); xx = np.arange(nn) / SR
-                    add(out, .12 * 2 / np.pi * np.arcsin(np.sin(2 * np.pi * note(m + 12) * xx)) * env(nn, .002, .12), st + h * beat + j * .012)
-    finish(out, '01_경쾌')
-
-def t02():  # 웅장: 84 BPM, Dm Bb F C, 큰북 + 금관 느낌 톱니파 화음 + 낮은 현 느낌 지속음
-    out = mk(); beat = 60 / 84
-    chords = [(38, [62, 65, 69]), (34, [62, 65, 70]), (41, [60, 65, 69]), (36, [60, 64, 67])]
-    for i, (bass, ch) in enumerate(chords):
-        st = i * 2 * beat; n = int(2 * beat * SR) + int(.3 * SR); x = np.arange(n) / SR
-        swell = np.minimum(1, x / 0.35) * np.exp(-x / 2.5)
-        pad = sum(saw(note(m), n, 10) for m in ch) / 3
-        add(out, 0.35 * pad * swell, st)                                   # 금관 느낌 화음
-        add(out, 0.30 * saw(note(bass), n, 6) * swell, st)                 # 저음
-        add(out, 0.25 * saw(note(bass - 12), n, 4) * swell, st)
-    for b in range(12):                                                  # 큰북: 박마다, 마디 첫 박은 더 크게
-        st = b * beat; tom(out, st, 60 if b % 4 == 0 else 85, 1.2 if b % 4 == 0 else 0.6, 0.6 if b % 4 == 0 else 0.3)
-        if b % 2 == 1: tom(out, st + beat / 2, 100, 0.35, 0.2)
-    n = int(2.5 * SR); add(out, 0.18 * noise(n, 9) * env(n, 0.002, 0.45), 0)  # 첫 박 심벌
-    finish(out, '02_웅장')
-
-def t03():  # 긴장: 110 BPM, 16분음표 반복 저음 + 위로 올라가는 소리 + 심장 박동 킥
-    out = mk(); beat = 60 / 110; s16 = beat / 4
-    seq = [45, 45, 57, 45, 45, 55, 45, 53]
-    for i in range(int(8 / s16)):
-        n = int(s16 * SR); x = np.arange(n) / SR; m = seq[i % 8] + (2 if i >= 64 else 0)
-        add(out, 0.25 * saw(note(m), n, 8) * env(n, .003, .07), i * s16)
-    for b in range(int(8 / beat)):
-        kick(out, b * beat, 0.8); kick(out, b * beat + 0.18, 0.4)
-    x = np.arange(L) / SR; f = 300 * 2 ** (x / 8 * 2)
-    add(out, 0.12 * np.sin(2 * np.pi * np.cumsum(f) / SR) * (x / 8), 0)  # 올라가는 소리
-    finish(out, '03_긴장')
-
-def t04():  # 통통: 128 BPM, 마림바 느낌 선율, F C Dm Bb
-    out = mk(); beat = 60 / 128
-    def mar(m, st, amp=.3):
-        n = int(.5 * SR); x = np.arange(n) / SR
-        add(out, amp * (np.sin(2 * np.pi * note(m) * x) + .3 * np.sin(2 * np.pi * note(m) * 4 * x) * np.exp(-x * 30)) * env(n, .001, .14), st)
-    mel = [77, 81, 84, 81, 79, 76, 72, 76, 74, 77, 81, 77, 70, 74, 77, 82]
-    bass = [41, 36, 38, 34]
-    for b in range(int(8 / beat)):
-        st = b * beat; kick(out, st, .7)
-        if b % 2: snare(out, st, 300 + b, .25)
-        hat(out, st + beat / 2, 500 + b)
-        mar(mel[b % 16], st); mar(mel[(b + 2) % 16] - 12, st + beat / 2, .18)
-        n = int(beat * SR); xx = np.arange(n) / SR
-        add(out, .3 * np.sin(2 * np.pi * note(bass[(b // 4) % 4]) * xx) * env(n, .005, .2), st)
-    finish(out, '04_통통')
-
-for f in (t01, t02, t03, t04): f()
+if __name__ == '__main__':
+    OUT.mkdir(exist_ok=True)
+    for f, name in [(t01, '01_경쾌'), (t02, '02_웅장'), (t03, '03_긴장'), (t04, '04_통통')]:
+        render(f(), name)
