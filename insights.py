@@ -23,6 +23,8 @@ OUT = ROOT / '기록' / '성적표'
 REEL_METRICS = ['views', 'reach', 'ig_reels_avg_watch_time', 'ig_reels_video_view_total_time', 'reels_skip_rate',
                 'likes', 'comments', 'saved', 'shares', 'total_interactions']
 # reposts 는 문서에 있으나 Instagram 로그인 토큰에서는 'does not support the metrics: reposts'(2026-10-27 실측)라 뺐다
+# 팔로우 전환을 보려고 더한 지표(2026-11-12). 릴스에서 안 되는 토큰이 있을 수 있어 따로 읽고, 실패해도 나머지에 영향 없음
+EXTRA_REEL_METRICS = ['follows', 'profile_visits', 'profile_activity']
 REEL_FIELDS = 'id,media_type,media_product_type,timestamp,permalink,like_count,comments_count'
 # Meta 문서(Instagram User Insights): reach · views 모두 follow_type · media_product_type
 PLAIN_VIEWS = ['myeotwi.ya']
@@ -71,7 +73,32 @@ def media_insights(mid, token):
             else:
                 rec.setdefault('metric_errors', {})[m] = r1 if not ok1 else '빈 응답'
                 status[m] = f'실패 HTTP {r1.get("http")} code {r1.get("code")}' if not ok1 else '빈 응답'
+    for m in EXTRA_REEL_METRICS:
+        ok1, r1 = get(f'{API}/{mid}/insights?metric={m}', token)
+        if ok1 and r1.get('data'):
+            d = r1['data'][0]; rec['metrics'][m] = d.get('values', [{}])[0].get('value', d.get('total_value', {}).get('value')); status[m] = '읽힘'
+        else:
+            rec.setdefault('metric_errors', {})[m] = r1 if not ok1 else '빈 응답'
+            status[m] = f'실패 HTTP {r1.get("http")} code {r1.get("code")}' if not ok1 else '빈 응답'
     return rec, status
+
+
+def account_extra(ig, token, days=14):
+    # 계정 단위 하루별 팔로우 · 언팔로우 · 프로필 링크 탭 · 팔로워 수(2026-11-12 추가). 실패해도 나머지에 영향 없음
+    rows, status = [], {}
+    today = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    for metric, extra in [('follows_and_unfollows', {'metric_type': 'total_value', 'breakdown': 'follow_type'}),
+                          ('profile_links_taps', {'metric_type': 'total_value'}), ('follower_count', {})]:
+        for i in range(days, 0, -1):
+            since = int((today - datetime.timedelta(days=i)).timestamp()); until = since + 86400
+            q = urllib.parse.urlencode({'metric': metric, 'period': 'day', 'since': since, 'until': until, **extra})
+            ok, r = get(f'{API}/{ig}/insights?{q}', token)
+            if ok:
+                rows.append({'metric': metric, 'since_utc': since, 'data': r.get('data', [])}); status[metric] = '읽힘'
+            else:
+                status[metric] = f'실패 HTTP {r.get("http")} code {r.get("code")}'
+                rows.append({'metric': metric, 'since_utc': since, 'error': r}); break
+    return rows, status
 
 
 def account_insights(ig, token, days=7):
@@ -117,7 +144,9 @@ def main():
             print(f'{name} {rl["post_id"]}: ' + ', '.join(f'{k} {v}' for k, v in st.items()))
         acc_rows, ast = account_insights(ig, tok) if ig else ([], {})
         print(f'{name} 계정: ' + ', '.join(f'{k} {v}' for k, v in ast.items()))
-        result['accounts'][name] = {'reels': media, 'account_daily': acc_rows}
+        ext_rows, est = account_extra(ig, tok) if ig else ([], {})
+        print(f'{name} 계정 추가: ' + ', '.join(f'{k} {v}' for k, v in est.items()))
+        result['accounts'][name] = {'reels': media, 'account_daily': acc_rows, 'account_extra': ext_rows}
     OUT.mkdir(parents=True, exist_ok=True)
     fn = now.strftime('%Y%m%d_%H%M') + '.enc.json'
     (OUT / fn).write_text(json.dumps(encrypt(result)), encoding='utf-8')
