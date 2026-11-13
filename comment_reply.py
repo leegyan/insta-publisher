@@ -77,13 +77,14 @@ def norm(s): return ''.join(str(s or '').split()).lower()
 
 
 def pick(rule, rules, now):
-    """지금 달 문장 틀 목록. next_at(다음 편 게시 시각) 전이면 before 틀, 지났으면 after 틀. 틀의 {ep} · {time} 은 게시물 설정 값으로 채운다."""
+    """지금 달 문장 틀 목록. next_at(다음 편 게시 시각) 전이면 before 틀, 지났으면 after 틀, next_at 이 없으면 soon 틀. 틀의 {ep} · {time} · {day}(기본 '오늘') 는 게시물 설정 값으로 채운다."""
     na = rule.get('next_at')
-    kind = 'final' if rule.get('final') else 'before' if na and now < datetime.datetime.fromisoformat(na) else 'after'   # final: 완결편 — 다음 에피소드를 기다려 달라는 문장(Gyan 26.11.13.)
+    # final: 완결편 — 다음 에피소드를 기다려 달라는 문장(Gyan 26.11.13.) / soon: 다음 게시 시각이 아직 안 정해진 편
+    kind = 'final' if rule.get('final') else 'soon' if not na else 'before' if now < datetime.datetime.fromisoformat(na) else 'after'
     own = rule.get(kind)   # 게시물에 따로 적은 문장이 있으면 그것을, 없으면 공통 문장(templates)을 쓴다
     tpls = (own if isinstance(own, (list, str)) else None) or rules.get('templates', {}).get(kind) or []
     if isinstance(tpls, str): tpls = [tpls]
-    return [t.format(ep=rule.get('ep', '다음 편'), time=rule.get('time', '')) for t in tpls]
+    return [t.format(ep=rule.get('ep', '다음 편'), time=rule.get('time', ''), day=rule.get('day', '오늘')) for t in tpls]
 
 
 def main(arg=None):
