@@ -1,10 +1,8 @@
-점검 시각 2026-11-13T18:34:50+09:00
+점검 시각 2026-11-13T18:45:03+09:00
 mode run
 hyogwa.check_20261113_공감툰_남21_이직대작전1_릴스: 댓글 2개 · 낱말 든 댓글 0개 · 달 차례 0개 · 이번에 단 답글 0개 · 준비한 문장 10가지
 hyogwa.check_20261113_공감툰_남22_이직대작전2_릴스: 댓글 4개 · 낱말 든 댓글 1개 · 달 차례 0개 · 이번에 단 답글 0개 · 준비한 문장 10가지
 hyogwa.check_20261114_공감툰_남24_은행대란1_릴스: 아직 게시 기록 없음
 hyogwa.check_20261114_공감툰_남25_은행대란2_릴스: 아직 게시 기록 없음
-hyogwa.check_20261113_공감툰_남23_이직대작전3_릴스: 댓글 1개 · 낱말 든 댓글 0개 · 달 차례 0개 · 이번에 단 답글 0개 · 준비한 문장 10가지
+hyogwa.check_20261113_공감툰_남23_이직대작전3_릴스: 댓글 2개 · 낱말 든 댓글 0개 · 달 차례 0개 · 이번에 단 답글 0개 · 준비한 문장 10가지
 hyogwa.check_20261114_공감툰_남26_은행대란3_릴스: 아직 게시 기록 없음
-hyogwa.check_20261108_공감툰_여6_5분만_쇼츠_재시도1: 댓글 읽기 실패 GET https://graph.instagram.com/v26.0/4ayNKYzyNDk/comments → HTTP 400: {"error":{"message":"Unsupported get request. Object with ID '4ayNKYzyNDk' does not exist, cannot be loaded due to missing permis
-hyogwa.check 댓글 좋아요: 최근 게시물 31개 · 남의 댓글 40개 · 누를 차례 40개 · 이번에 누름 0개 · 실패 「POST https://graph.instagram.com/v26.0/17841454363638550/likes → HTTP 400: {"error":{"message":"Unsupported post request. Object with ID '17841454363638550' does not exist, cannot be loaded due to missing permissions, or does not support this operation","type":"IGApiException","code":100,"error_subc」
