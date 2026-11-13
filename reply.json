@@ -72,8 +72,9 @@
      "final": true
     }
    },
-   "like": true,
-   "like_days": 7
+   "like": false,
+   "like_days": 7,
+   "like_note": "2026-11-13 18:34 실제 호출 결과: graph.instagram.com(인스타그램 로그인 토큰)에서는 POST /<IG_USER_ID>/likes 가 'Unsupported post request'(code 100)로 거절됨 → 꺼 둠. 페이스북 로그인 방식 토큰으로 바꾸면 다시 켤 수 있음"
   }
  }
 }

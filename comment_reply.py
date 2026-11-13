@@ -66,7 +66,7 @@ def recent_media(name, now, days):
             try: j = json.loads(line)
             except ValueError: continue
             pid = j.get('post_id', '')
-            if j.get('account') != name or not j.get('media_id') or pid.endswith(('_쇼츠', '_스토리')): continue
+            if j.get('account') != name or not j.get('media_id') or '_쇼츠' in pid or '_스토리' in pid: continue
             try: at = datetime.datetime.fromisoformat(j.get('published_at'))
             except (TypeError, ValueError): continue
             if (now - at).total_seconds() <= days * 86400: out[pid] = str(j['media_id'])
