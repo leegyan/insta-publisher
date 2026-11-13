@@ -1,0 +1,47 @@
+name: 댓글 낱말 답글
+# 연재 릴스에서 '담핱'(다음 편 하트)이 들어간 댓글에 다음 편 올라오는 시각을 공개 답글로 단다(comment_reply.py · reply.json, Gyan 26.11.13.)
+# GitHub 예약 실행은 몇 시간씩 늦을 수 있어서(publish.yml 주석 26.10.30.) 한 번 실행되면 10분마다 댓글을 읽으며 5시간 40분 동안 돌고, 끝날 때 자기 자신을 다시 실행한다.
+# 예약(매시 23분)과 reply.json · comment_reply.py 변경 시 실행은 이 반복이 끊겼을 때 다시 시작시키는 용도다. 동시에는 하나만 돈다(concurrency).
+# 끄려면 reply.json 의 mode 를 off 로(반복은 계속 돌지만 아무것도 하지 않는다).
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '23 * * * *'
+  push:
+    branches: [main]
+    paths: ['reply.json', 'comment_reply.py', '.github/workflows/reply.yml']
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: reply
+  cancel-in-progress: false
+jobs:
+  reply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - name: 10분마다 댓글 읽고 답글
+        env:
+          IG_TOKEN_HYOGWA_CHECK: ${{ secrets.IG_TOKEN_HYOGWA_CHECK }}
+        run: |
+          git config user.name insta-publisher; git config user.email bot@users.noreply.github.com
+          end=$(( $(date +%s) + 20400 ))   # 5시간 40분
+          while [ $(date +%s) -lt $end ]; do
+            git pull -q --rebase origin main || { git rebase --abort 2>/dev/null; git fetch -q origin main; git reset -q --hard origin/main; }
+            python3 comment_reply.py || echo "실행 오류(다음 차례에 다시 시도)"
+            git add 기록/reply_답글.json 기록/reply_점검.txt 2>/dev/null || true
+            if ! git diff --cached --quiet; then
+              git commit -q -m '답글 기록'
+              for i in 1 2 3; do git push -q origin HEAD:main && break; git pull -q --rebase origin main || { git rebase --abort 2>/dev/null; break; }; done
+            fi
+            sleep 600
+          done
+      - name: 다음 반복 실행
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sSf -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/reply.yml/dispatches" -d '{"ref":"main"}'
