@@ -9,6 +9,8 @@
 #   next_at(다음 편 게시 시각) 전에는 templates.before, 지난 뒤에는 templates.after 문장 가운데 하나를 차례로 돌려 단다({ep} = 다음 편 이름, {time} = 올라오는 시각)
 # 달지 않는 댓글: 우리 계정이 쓴 댓글 · 이미 우리 답글이 달린 댓글(손으로 답한 것 포함) · 전에 이 도구가 답한 댓글
 # 기록: 기록/reply_답글.json(답한 댓글 ID), 기록/reply_점검.txt(마지막 실행 결과 — 공개 저장소라 사용자 이름 · 댓글 내용은 적지 않는다)
+# 댓글 좋아요(accounts.<계정>.like = true): 최근 like_days 일(기본 7) 안에 올린 릴스 · 캐러셀의 남의 댓글에 좋아요를 누른다(Gyan 26.11.13. '댓글 달리면 하트 자동으로')
+#   Like Media and Comments API(2026-04): POST /<IG_USER_ID>/likes?comment_id=. 실패하면 그 실행에서는 더 누르지 않고 점검 파일에 이유를 적는다. 누른 댓글은 기록/reply_좋아요.json
 # 필요한 권한: instagram_business_basic + instagram_business_manage_comments. 토큰은 GitHub Actions 비밀값(accounts.json 의 token_secret)
 import json, os, sys, datetime, pathlib, urllib.request, urllib.parse, urllib.error
 
@@ -19,6 +21,7 @@ RULES_F = ROOT / 'reply.json'
 PUB_F = ROOT / '기록' / '게시기록.jsonl'
 DONE_F = ROOT / '기록' / 'reply_답글.json'
 CHECK_F = ROOT / '기록' / 'reply_점검.txt'
+LIKE_F = ROOT / '기록' / 'reply_좋아요.json'
 KST = datetime.timezone(datetime.timedelta(hours=9))
 HTTP = None  # 시험에서 가짜 함수로 바꿈
 NOW = None   # 시험에서 시각을 고정
@@ -55,6 +58,21 @@ def media_ids():
     return out
 
 
+def recent_media(name, now, days):
+    """게시기록에서 이 계정이 최근 days 일 안에 올린 인스타그램 게시물(릴스 · 캐러셀)의 post_id → media_id. 쇼츠 · 스토리는 뺀다."""
+    out = {}
+    if PUB_F.exists():
+        for line in PUB_F.read_text(encoding='utf-8').splitlines():
+            try: j = json.loads(line)
+            except ValueError: continue
+            pid = j.get('post_id', '')
+            if j.get('account') != name or not j.get('media_id') or pid.endswith(('_쇼츠', '_스토리')): continue
+            try: at = datetime.datetime.fromisoformat(j.get('published_at'))
+            except (TypeError, ValueError): continue
+            if (now - at).total_seconds() <= days * 86400: out[pid] = str(j['media_id'])
+    return out
+
+
 def norm(s): return ''.join(str(s or '').split()).lower()
 
 
@@ -72,16 +90,24 @@ def main(arg=None):
     rules = json.loads(RULES_F.read_text(encoding='utf-8')); mode = arg or rules.get('mode', 'off')
     if mode not in ('dry', 'run'): print('mode off — 아무것도 하지 않음'); return 0
     done = json.loads(DONE_F.read_text(encoding='utf-8')) if DONE_F.exists() else {}
+    liked = json.loads(LIKE_F.read_text(encoding='utf-8')) if LIKE_F.exists() else {}
+    n_liked0 = len(liked)
     now = NOW or datetime.datetime.now(KST); mids = media_ids(); lines = []; n_sent = 0
     for name, ar in rules.get('accounts', {}).items():
         acc = CFG['accounts'][name]; tok = os.environ.get(acc['token_secret']); me = str(acc['ig_user_id'])
         if not tok: lines.append(f'{name}: 토큰 비밀값 없음 — 건너뜀'); continue
         keys = [norm(k) for k in ar.get('keywords', []) if norm(k)]
+        cache = {}   # media_id → 댓글 목록(답글과 좋아요가 같은 게시물을 두 번 읽지 않게)
+
+        def read(mid):
+            if mid not in cache: cache[mid] = list(comments(mid, tok))
+            return cache[mid]
+
         for pid, rule in ar.get('posts', {}).items():
             mid = mids.get(pid)
             if not mid: lines.append(f'{pid}: 아직 게시 기록 없음'); continue
             msgs = pick(rule, rules, now)
-            try: got = list(comments(mid, tok))
+            try: got = read(mid)
             except RuntimeError as e: lines.append(f'{pid}: 댓글 읽기 실패 {str(e)[:200]}'); continue
             hit = todo = sent = fail = 0
             for c in got:
@@ -101,12 +127,29 @@ def main(arg=None):
                 except RuntimeError as e:
                     fail += 1; lines.append(f'{pid}: 답글 실패 {str(e)[:200]}')
             lines.append(f'{pid}: 댓글 {len(got)}개 · 낱말 든 댓글 {hit}개 · 달 차례 {todo}개 · 이번에 단 답글 {sent}개' + (f' · 실패 {fail}개' if fail else '') + f' · 준비한 문장 {len(msgs)}가지')
+        if ar.get('like'):
+            rec = recent_media(name, now, ar.get('like_days', 7)); seen = todo = ok = 0; err = ''
+            for pid, mid in rec.items():
+                try: got = read(mid)
+                except RuntimeError as e: lines.append(f'{pid}: 댓글 읽기 실패 {str(e)[:200]}'); continue
+                for c in got:
+                    if str(c.get('from', {}).get('id')) == me: continue
+                    seen += 1
+                    if c['id'] in liked: continue
+                    todo += 1
+                    if mode == 'dry' or err: continue                                    # 한 번 실패하면 이 실행에서는 더 누르지 않는다
+                    try:
+                        http('POST', f'{API}/{me}/likes?' + urllib.parse.urlencode({'comment_id': c['id']}), None, tok)
+                        liked[c['id']] = now.isoformat(timespec='seconds'); ok += 1
+                    except RuntimeError as e: err = str(e)[:300]
+            lines.append(f'{name} 댓글 좋아요: 최근 게시물 {len(rec)}개 · 남의 댓글 {seen}개 · 누를 차례 {todo}개 · 이번에 누름 {ok}개' + (f' · 실패 「{err}」' if err else ''))
     DONE_F.parent.mkdir(exist_ok=True)
     if mode == 'run' or any(v == 'answered' for k, v in done.items() if k != '_rot'):
         DONE_F.write_text(json.dumps(done, ensure_ascii=False, indent=0), encoding='utf-8')
+    if len(liked) != n_liked0: LIKE_F.write_text(json.dumps(liked, ensure_ascii=False, indent=0), encoding='utf-8')
     text = f'mode {mode}\n' + '\n'.join(lines) + '\n'
     old = CHECK_F.read_text(encoding='utf-8') if CHECK_F.exists() else ''
-    if text != old.split('\n', 1)[-1]:   # 내용이 바뀐 때만 새로 적는다(30분마다 빈 커밋이 생기지 않게)
+    if text != old.split('\n', 1)[-1]:   # 내용이 바뀐 때만 새로 적는다(10분마다 빈 커밋이 생기지 않게)
         CHECK_F.write_text(f'점검 시각 {now.isoformat(timespec="seconds")}\n' + text, encoding='utf-8')
     print(text); return n_sent
 

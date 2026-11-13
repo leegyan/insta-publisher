@@ -31,7 +31,7 @@ jobs:
           while [ $(date +%s) -lt $end ]; do
             git pull -q --rebase origin main || { git rebase --abort 2>/dev/null; git fetch -q origin main; git reset -q --hard origin/main; }
             python3 comment_reply.py || echo "실행 오류(다음 차례에 다시 시도)"
-            git add 기록/reply_답글.json 기록/reply_점검.txt 2>/dev/null || true
+            git add 기록/reply_답글.json 기록/reply_점검.txt 기록/reply_좋아요.json 2>/dev/null || true
             if ! git diff --cached --quiet; then
               git commit -q -m '답글 기록'
               for i in 1 2 3; do git push -q origin HEAD:main && break; git pull -q --rebase origin main || { git rebase --abort 2>/dev/null; break; }; done

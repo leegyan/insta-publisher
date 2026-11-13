@@ -1,5 +1,5 @@
 {
- "about": "댓글 낱말 → 공개 답글 자동 달기 설정(comment_reply.py). 연재 릴스에서 '담핱'(다음 편 하트)이 들어간 댓글에 다음 편 올라오는 시각을 답글로 알린다. mode: off = 끔 / dry = 달지 않고 점검만 / run = 답글을 단다. 문장은 templates 를 차례로 돌려 쓴다(자동 댓글 같지 않게 10가지, Gyan 26.11.13.)",
+ "about": "댓글 낱말 → 공개 답글 자동 달기 설정(comment_reply.py). 연재 릴스에서 '담핱'(다음 편 하트)이 들어간 댓글에 다음 편 올라오는 시각을 답글로 알린다. mode: off = 끔 / dry = 달지 않고 점검만 / run = 답글을 단다. 문장은 templates 를 차례로 돌려 쓴다(자동 댓글 같지 않게 10가지, Gyan 26.11.13.) · like: true 면 최근 like_days 일 안 게시물의 남의 댓글에 좋아요도 누른다",
  "mode": "run",
  "templates": {
   "before": [
@@ -71,7 +71,9 @@
     "hyogwa.check_20261114_공감툰_남26_은행대란3_릴스": {
      "final": true
     }
-   }
+   },
+   "like": true,
+   "like_days": 7
   }
  }
 }
