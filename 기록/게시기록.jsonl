@@ -422,3 +422,5 @@
 {"post_id": "thumbnail_jUESvGTM12I", "warning": "썸네일 실패 jUESvGTM12I HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"The user has uploaded too many thumbnails recently. Please try the request again later.\",\n    \"errors\": [\n      {\n        \"message\": \"The user has uploaded too many thumbnails recently. Please try the request again later.\",\n        \"domain\": \"youtube.t", "at": "2026-11-14T11:31:01+09:00"}
 {"post_id": "hyogwa.check_20261114_공감툰_남25_은행대란2_쇼츠", "account": "hyogwa.check", "media_id": "jUESvGTM12I", "published_at": "2026-11-14T11:31:01+09:00"}
 {"post_id": "hyogwa.check_20261114_공감툰_남25_은행대란2_스토리", "account": "hyogwa.check", "media_id": "18150607390572907", "published_at": "2026-11-14T11:31:37+09:00"}
+{"post_id": "myeotwi.ya_20261114_챔스우승횟수_릴스", "account": "myeotwi.ya", "media_id": "18140861410727553", "published_at": "2026-11-14T12:01:50+09:00"}
+{"post_id": "myeotwi.ya_20261114_챔스우승횟수_스토리", "account": "myeotwi.ya", "media_id": "18644916721020252", "published_at": "2026-11-14T12:02:24+09:00"}
