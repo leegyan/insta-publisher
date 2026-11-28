@@ -1,25 +1,40 @@
 {
- "collected_at": "2026-11-27T17:49:25+09:00",
+ "collected_at": "2026-11-28T17:06:26+09:00",
  "reels": [
+  {
+   "post_id": "myeotwi.ya_20261128_티어15_릴스",
+   "published_at": "2026-11-28T17:01:20+09:00",
+   "views": 0
+  },
+  {
+   "post_id": "myeotwi.ya_20261128_코파_릴스",
+   "published_at": "2026-11-28T12:00:49+09:00",
+   "views": 174
+  },
+  {
+   "post_id": "myeotwi.ya_20261127_청룡최다수상작_릴스",
+   "published_at": "2026-11-27T21:00:49+09:00",
+   "views": 154
+  },
   {
    "post_id": "myeotwi.ya_20261127_티어14_서바이벌예능_릴스",
    "published_at": "2026-11-27T17:00:47+09:00",
-   "views": 134
+   "views": 137
   },
   {
    "post_id": "myeotwi.ya_20261127_유로우승횟수_릴스",
    "published_at": "2026-11-27T12:00:52+09:00",
-   "views": 159
+   "views": 161
   },
   {
    "post_id": "myeotwi.ya_20261127_통합화제성48주_릴스",
    "published_at": "2026-11-27T07:00:51+09:00",
-   "views": 1616
+   "views": 1669
   },
   {
    "post_id": "myeotwi.ya_20261125_갤럽올해의가수1위횟수_릴스",
    "published_at": "2026-11-25T21:00:46+09:00",
-   "views": 476
+   "views": 481
   },
   {
    "post_id": "myeotwi.ya_20261125_티어13_스포츠예능_릴스",
@@ -29,22 +44,22 @@
   {
    "post_id": "myeotwi.ya_20261125_아시안컵우승횟수_릴스",
    "published_at": "2026-11-25T12:01:48+09:00",
-   "views": 166
+   "views": 170
   },
   {
    "post_id": "myeotwi.ya_20261125_드라마출연자화제성48주_릴스",
    "published_at": "2026-11-25T07:00:52+09:00",
-   "views": 1618
+   "views": 1619
   },
   {
    "post_id": "myeotwi.ya_20261124_빌보드200K팝1위_릴스",
    "published_at": "2026-11-24T21:00:52+09:00",
-   "views": 2237
+   "views": 2249
   },
   {
    "post_id": "myeotwi.ya_20261124_티어12음악예능_릴스",
    "published_at": "2026-11-24T17:01:21+09:00",
-   "views": 1490
+   "views": 1494
   },
   {
    "post_id": "myeotwi.ya_20261124_리그1우승횟수_릴스",
@@ -54,12 +69,12 @@
   {
    "post_id": "myeotwi.ya_20261124_써클10월디지털_릴스",
    "published_at": "2026-11-24T07:01:57+09:00",
-   "views": 1852
+   "views": 1854
   },
   {
    "post_id": "myeotwi.ya_20261123_MAMA대상최다_릴스",
    "published_at": "2026-11-23T21:00:48+09:00",
-   "views": 4794
+   "views": 4832
   },
   {
    "post_id": "myeotwi.ya_20261123_티어11_관찰예능_릴스",
@@ -89,12 +104,12 @@
   {
    "post_id": "myeotwi.ya_20261122_세리에A우승횟수_릴스",
    "published_at": "2026-11-22T12:00:47+09:00",
-   "views": 185
+   "views": 188
   },
   {
    "post_id": "myeotwi.ya_20261122_트로트가수K브랜드_릴스",
    "published_at": "2026-11-22T07:00:49+09:00",
-   "views": 1409
+   "views": 1415
   },
   {
    "post_id": "myeotwi.ya_20261121_서울가요대상최다_릴스",
@@ -119,7 +134,7 @@
   {
    "post_id": "myeotwi.ya_20261120_MMA대상최다_릴스",
    "published_at": "2026-11-20T21:00:48+09:00",
-   "views": 5262
+   "views": 5264
   },
   {
    "post_id": "myeotwi.ya_20261120_티어8_추리예능_릴스",
@@ -244,7 +259,7 @@
   {
    "post_id": "myeotwi.ya_20261114_과몰입티어2_국민예능_릴스",
    "published_at": "2026-11-14T17:00:51+09:00",
-   "views": 1594
+   "views": 1596
   },
   {
    "post_id": "myeotwi.ya_20261114_챔스우승횟수_릴스",
@@ -254,7 +269,7 @@
   {
    "post_id": "myeotwi.ya_20261114_보이그룹브랜드평판11월_릴스",
    "published_at": "2026-11-14T07:01:21+09:00",
-   "views": 1788
+   "views": 1790
   },
   {
    "post_id": "myeotwi.ya_20261113_갤럽예능방송인_릴스",
@@ -284,7 +299,7 @@
   {
    "post_id": "myeotwi.ya_20261112_레전드가수평판11월_릴스",
    "published_at": "2026-11-12T20:00:48+09:00",
-   "views": 2667
+   "views": 2677
   },
   {
    "post_id": "myeotwi.ya_20261112_써클연간디지털2025_릴스",
@@ -329,7 +344,7 @@
   {
    "post_id": "myeotwi.ya_20261111_써클디지털상반기2026_릴스",
    "published_at": "2026-11-11T17:00:50+09:00",
-   "views": 3431
+   "views": 3441
   },
   {
    "post_id": "myeotwi.ya_20261111_아이돌개인평판10월_릴스",
@@ -374,12 +389,12 @@
   {
    "post_id": "myeotwi.ya_20261110_신인아이돌개인11월_릴스",
    "published_at": "2026-11-10T15:01:49+09:00",
-   "views": 2151
+   "views": 2158
   },
   {
    "post_id": "myeotwi.ya_20261110_갤럽탤런트2025_릴스",
    "published_at": "2026-11-10T13:00:52+09:00",
-   "views": 1349
+   "views": 1350
   },
   {
    "post_id": "myeotwi.ya_20261110_대학교평판11월_릴스",
@@ -489,7 +504,7 @@
   {
    "post_id": "myeotwi.ya_20261107_한터월간음반10월_릴스",
    "published_at": "2026-11-07T17:00:47+09:00",
-   "views": 1801
+   "views": 1802
   },
   {
    "post_id": "myeotwi.ya_20261107_KBO구단관중_릴스",
@@ -504,7 +519,7 @@
   {
    "post_id": "myeotwi.ya_20261107_드라마배우평판10월_릴스",
    "published_at": "2026-11-07T11:00:47+09:00",
-   "views": 2267
+   "views": 2276
   },
   {
    "post_id": "myeotwi.ya_20261107_소득세율구간_릴스",
@@ -529,7 +544,7 @@
   {
    "post_id": "myeotwi.ya_20261106_가수브랜드평판10월_릴스",
    "published_at": "2026-11-06T14:00:50+09:00",
-   "views": 6135
+   "views": 6155
   },
   {
    "post_id": "myeotwi.ya_20261106_우리집소득순위2인_릴스",
